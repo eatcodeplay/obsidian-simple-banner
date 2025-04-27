@@ -22,7 +22,7 @@ Enhance your Obsidian notes with a visually striking banner image at the top, se
 
 ## Demo
 
-https://github.com/user-attachments/assets/94e054c5-8231-4a13-8b0e-0a29e832ec10
+https://github.com/user-attachments/assets/1418a892-f31b-4298-9892-7fa745e02532
 
 ## Examples
 
