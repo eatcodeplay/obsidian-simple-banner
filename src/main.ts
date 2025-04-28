@@ -1,6 +1,5 @@
 import {
 	App,
-	debounce,
 	MarkdownView,
 	Platform,
 	Plugin,
@@ -65,7 +64,6 @@ export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
 	workspace: Workspace;
 	settings: SimpleBannerSettings;
-	boundProcess: () => void;
 
 	//---------------------------------------------------
 	//
@@ -80,8 +78,7 @@ export default class SimpleBanner extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			this.applySettings();
-			this.boundProcess = debounce(this.process.bind(this), 50);
-			this.registerEvent(this.workspace.on('layout-change', this.boundProcess));
+			this.registerEvent(this.workspace.on('layout-change', this.process.bind(this)));
 			this.registerEvent(this.workspace.on('file-open', this.handleFileEvents.bind(this)));
 			this.registerEvent(this.app.metadataCache.on('changed', this.handleMetaEvents.bind(this)));
 			this.processAll();
@@ -101,7 +98,7 @@ export default class SimpleBanner extends Plugin {
 		this.app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
 			const view = leaf.view as MarkdownView;
 			if (view) {
-				const file = view.file as TFile || null;
+				const file = view?.file || null;
 				const options = this.computeBannerData(file, view);
 				this.process(options || null);
 			}
@@ -142,11 +139,13 @@ export default class SimpleBanner extends Plugin {
 						const { url, repeatable, x, y } = this.parseLinkString(value || '', view);
 
 						element.classList.remove('static');
-						this.setCSSVariable('--smpbn-url', `url(${url}`, container);
-						this.setCSSVariable('--smpbn-img-x', `${x}px`, container);
-						this.setCSSVariable('--smpbn-img-y', `${y}px`, container);
-						this.setCSSVariable('--smpbn-size', repeatable ? 'auto' : 'cover', container);
-						this.setCSSVariable('--smpbn-repeat', repeatable ? 'repeat' : 'no-repeat', container);
+						this.setCSSVariables({
+							'--smpbn-url': `url(${url}`,
+							'--smpbn-img-x': `${x}px`,
+							'--smpbn-img-y': `${y}px`,
+							'--smpbn-size': repeatable ? 'auto' : 'cover',
+							'--smpbn-repeat': repeatable ? 'repeat' : 'no-repeat',
+						}, container);
 
 						if (isUpdate) {
 							element.classList.add('static');
@@ -179,7 +178,7 @@ export default class SimpleBanner extends Plugin {
 		}
 	}
 
-	computeBannerData(newfile?: TFile, targetView?: MarkdownView): BannerData | null {
+	computeBannerData(newfile?: TFile | null, targetView?: MarkdownView): BannerData | null {
 		const view = targetView || this.getActiveView();
 		if (view instanceof MarkdownView) {
 			const viewMode = view.getMode() || null;
@@ -249,17 +248,13 @@ export default class SimpleBanner extends Plugin {
 		const padding = this.settings.padding;
 		const fade = this.settings.fade;
 
-		this.setCSSVariable('--smpbn-height', `${height}px`);
-		this.setCSSVariable('--smpbn-note-offset', `${offset}px`);
-		this.setCSSVariable('--smpbn-radius', `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`);
-		this.setCSSVariable('--smpbn-padding', `${padding}px`);
-		this.setCSSVariable('--smpbn-fade', 'none');
-		if (fade) {
-			this.setCSSVariable(
-				'--smpbn-fade',
-				`linear-gradient(to bottom, black calc(100% + -75%), transparent)`
-			);
-		}
+		this.setCSSVariables({
+			'--smpbn-height': `${height}px`,
+			'--smpbn-note-offset': `${offset}px`,
+			'--smpbn-radius': `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`,
+			'--smpbn-padding': `${padding}px`,
+			'--smpbn-fade': (fade) ? 'linear-gradient(180deg, black 25%, transparent)' : 'none',
+		});
 	}
 
 	//----------------------------------
@@ -269,9 +264,8 @@ export default class SimpleBanner extends Plugin {
 		const options = this.computeBannerData(file);
 		const container = options?.container;
 		if (options && container && file.path !== options.path) {
-			options.lastViewMode = null;
 			delete container.dataset.sb;
-			this.boundProcess();
+			this.process();
 		}
 	}
 
@@ -295,21 +289,18 @@ export default class SimpleBanner extends Plugin {
 	parseLinkString(str: string, view?: MarkdownView | null) {
 		let url: string | null = null;
 		let displayText: string | null = null;
-		let external: boolean = false;
+		let external: boolean;
 		let obsidianUrl: boolean = false;
 		let options = { x: 0, y: 0, repeatable: false };
 
-		const wikilinkRegex = /^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/;
-		const wikilinkMatch = str.match(wikilinkRegex);
+		const wikilinkMatch = str.match(/^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/);
 		if (wikilinkMatch) {
 			url = wikilinkMatch[1].trim();
 			displayText = wikilinkMatch[3] ? wikilinkMatch[3].trim() : null;
 		}
 
-		const markdownLinkRegex = /^!?\[([^\]]*)\]\(([^)]+?)\)$/;
-		const markdownBareLinkRegex = /^!?<([^>]+)>$/;
-		const markdownMatch = str.match(markdownLinkRegex);
-		const markdownBareMatch = str.match(markdownBareLinkRegex);
+		const markdownMatch = str.match(/^!?\[([^\]]*)\]\(([^)]+?)\)$/);
+		const markdownBareMatch = str.match(/^!?<([^>]+)>$/);
 		if (markdownMatch) {
 			displayText = markdownMatch[1].trim();
 			url = markdownMatch[2].trim();
@@ -364,6 +355,7 @@ export default class SimpleBanner extends Plugin {
 			if (obsidianUrl && file && view) {
 				const activeFile = this.workspace.getActiveFile();
 				if (activeFile) {
+					// noinspection JSIgnoredPromiseFromCall
 					this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
 						const propName = this.settings.propertyName;
 						frontmatter[propName] = `[[${file?.path}]]`
@@ -408,8 +400,11 @@ export default class SimpleBanner extends Plugin {
 		return oldopt.url === newopt.url;
 	}
 
-	setCSSVariable(name: string, value: string, target: HTMLElement = document.documentElement) {
-		target.style.setProperty(name, value);
+	setCSSVariables(variables: Record<string, string>, target: HTMLElement = document.documentElement) {
+		const style = target.style;
+		Object.keys(variables).forEach(v => {
+			style.setProperty(v, variables[v]);
+		});
 	}
 
 	createDefaultBannerData(): BannerData {
