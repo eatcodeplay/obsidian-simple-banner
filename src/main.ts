@@ -130,7 +130,7 @@ export default class SimpleBanner extends Plugin {
 		if (lastViewMode !== viewMode || isNewValue) {
 			if (container && isNewValue) {
 				const view = this.getActiveView();
-				const containers = container.querySelectorAll('.markdown-preview-view, .cm-scroller');
+				const containers = container.querySelectorAll('.markdown-reading-view > .markdown-preview-view, .cm-scroller');
 				containers.forEach((c) => {
 					let element = (c.querySelector('.simple-banner') || document.createElement('div')) as HTMLElement;
 					element.classList.add('simple-banner');

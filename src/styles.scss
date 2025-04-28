@@ -104,13 +104,18 @@
 		z-index: 1;
 		padding-top: calc(var(--smpbn-height, 240px) + (var(--smpbn-note-offset) - 6px));
 	}
+
 	.el-pre.mod-frontmatter.mod-ui {
 		padding-top: calc(var(--smpbn-height, 240px) + (var(--smpbn-note-offset) + 12px));
+	}
+
+	.inline-embed .el-pre.mod-frontmatter.mod-ui {
+		padding-top: initial;
 	}
 }
 
 body.show-inline-title .workspace-leaf-content[data-sb] .view-content > .markdown-source-view.mod-cm6 > .cm-editor > .cm-scroller,
-body.show-inline-title .workspace-leaf-content[data-sb] .view-content .markdown-preview-view {
+body.show-inline-title .workspace-leaf-content[data-sb] .view-content > .markdown-preview-view {
 	.cm-contentContainer {
 		padding-top: 0;
 	}

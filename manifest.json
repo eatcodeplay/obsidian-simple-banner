@@ -1,7 +1,7 @@
 {
 	"id": "simple-banner",
 	"name": "Simple Banner",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "1.8.9",
 	"description": "Simply add a banner image.",
 	"author": "Sandro Ducceschi",

@@ -1,6 +1,6 @@
 {
 	"name": "simple-banner",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Simply add a banner image",
 	"main": "src/main.js",
 	"scripts": {
