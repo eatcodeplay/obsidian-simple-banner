@@ -1,12 +1,15 @@
 import {
 	MarkdownView,
-	Platform,
 	Plugin,
 	TFile,
 	Workspace,
 	WorkspaceLeaf,
 } from 'obsidian';
-import Settings, {SimpleBannerSettings} from "./settings";
+import Settings, {
+	SimpleBannerSettings,
+	PropertySettings,
+	DeviceSettings
+} from "./settings";
 
 //----------------------------------
 // Interfaces
@@ -53,6 +56,8 @@ export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
 	workspace: Workspace;
 	settings: SimpleBannerSettings;
+	deviceSettings: DeviceSettings;
+	settingProperties: PropertySettings;
 
 	//---------------------------------------------------
 	//
@@ -86,9 +91,13 @@ export default class SimpleBanner extends Plugin {
 		this.app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
 			const view = leaf.view as MarkdownView;
 			if (view) {
-				const file = view?.file || null;
-				const options = this.computeBannerData(file, view);
-				this.process(options || null);
+				if (this.deviceSettings.bannerEnabled) {
+					const file = view?.file || null;
+					const options = this.computeBannerData(file, view);
+					this.process(options || null);
+				} else {
+					this.removeBanner();
+				}
 			}
 		});
 	}
@@ -105,7 +114,9 @@ export default class SimpleBanner extends Plugin {
 		if (!opts.icon) {
 			opts.needsUpdate = true;
 		}
-		this.updateBanner(opts);
+		if (this.deviceSettings.bannerEnabled) {
+			this.updateBanner(opts);
+		}
 	}
 
 	updateBanner(options: BannerData) {
@@ -154,7 +165,7 @@ export default class SimpleBanner extends Plugin {
 				if (isIconChange) {
 					let iconContainer = element.querySelector('.icon');
 					const hadIconContainer = iconContainer !== null;
-					if (this.settings.iconEnabled && icon) {
+					if (this.deviceSettings.iconEnabled && icon) {
 						if (!hadIconContainer) {
 							iconContainer = document.createElement('div');
 							iconContainer.classList.add('icon');
@@ -166,7 +177,7 @@ export default class SimpleBanner extends Plugin {
 						if (iconContainer) {
 							const iconelement = iconContainer.querySelector('div') as HTMLElement;
 
-							let { value, type } = this.getIconData(icon);
+							let { value, type } = this.getIconData(icon, view);
 							value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
 							iconelement.dataset.type = type;
 
@@ -231,10 +242,13 @@ export default class SimpleBanner extends Plugin {
 				const frontmatter = cachedMetadata?.frontmatter;
 
 				if (frontmatter) {
+					const settingProps = this.settingProperties;
+					const imageProp = settingProps.image;
+					const iconProp = settingProps.icon;
+
 					// parse for image property
-					const imageProperty = this.settings.imageProperty;
-					if (frontmatter[imageProperty]) {
-						opt.image = frontmatter[imageProperty];
+					if (frontmatter[imageProp]) {
+						opt.image = frontmatter[imageProp];
 						opt.filepath = file.path;
 						if (oldopt.image !== opt.image) {
 							opt.needsUpdate = true;
@@ -247,10 +261,9 @@ export default class SimpleBanner extends Plugin {
 					}
 
 					// parse for icon property if enabled
-					if (this.settings.iconEnabled) {
-						const iconProperty = this.settings.iconProperty;
-						if (frontmatter[iconProperty]) {
-							opt.icon = frontmatter[iconProperty];
+					if (this.deviceSettings.iconEnabled) {
+						if (frontmatter[iconProp]) {
+							opt.icon = frontmatter[iconProp];
 							opt.filepath = file.path;
 							if (oldopt.icon !== opt.icon) {
 								opt.needsUpdate = true;
@@ -274,6 +287,8 @@ export default class SimpleBanner extends Plugin {
 	//----------------------------------
 	async loadSettings() {
 		this.settings = Object.assign({}, Settings.DEFAULT_SETTINGS, await this.loadData());
+		this.deviceSettings = this.settings[Settings.currentDevice];
+		this.settingProperties = this.settings.properties;
 	}
 
 	async saveSettings() {
@@ -282,19 +297,13 @@ export default class SimpleBanner extends Plugin {
 	}
 
 	applySettings() {
-		let height = this.settings.desktopHeight;
-		if (Platform.isTablet) {
-			height = this.settings.tabletHeight;
-		} else if (Platform.isMobile) {
-			height = this.settings.mobileHeight;
-		}
-
+		const settings = this.deviceSettings;
 		const vars = {} as any;
-
-		const offset = this.settings.noteOffset;
-		const radius = this.settings.bannerRadius;
-		const padding = this.settings.bannerPadding;
-		const fade = this.settings.bannerFade;
+		const height = settings.height;
+		const offset = settings.noteOffset;
+		const radius = settings.bannerRadius;
+		const padding = settings.bannerPadding;
+		const fade = settings.bannerFade;
 
 		vars['--smpbn-height'] = `${height}px`;
 		vars['--smpbn-note-offset'] = `${offset}px`;
@@ -302,14 +311,13 @@ export default class SimpleBanner extends Plugin {
 		vars['--smpbn-padding'] = `${padding}px`;
 		vars['--smpbn-fade'] = (fade) ? 'linear-gradient(180deg, var(--background-primary) 25%, transparent)' : 'none';
 
-		const iconEnabled = this.settings.iconEnabled;
-		if (iconEnabled) {
-			const iconSize = this.settings.iconSize;
-			const iconRadius = this.settings.iconRadius;
-			const iconBackground = this.settings.iconBackground;
-			const iconBorder = this.settings.iconBorder;
-			const iconAlignment = this.settings.iconAlignment;
-			const iconOffset = this.settings.iconOffset;
+		if (settings.iconEnabled) {
+			const iconSize = settings.iconSize;
+			const iconRadius = settings.iconRadius;
+			const iconBackground = settings.iconBackground;
+			const iconBorder = settings.iconBorder;
+			const iconAlignment = settings.iconAlignment;
+			const iconOffset = settings.iconOffset;
 
 			vars['--smpbn-icon-size'] = `${iconSize}px`;
 			vars['--smpbn-icon-radius'] = `${iconRadius}px`;
@@ -354,7 +362,7 @@ export default class SimpleBanner extends Plugin {
 		return this.workspace.getActiveViewOfType(MarkdownView) || null;
 	}
 
-	parseLinkString(str: string, view?: MarkdownView | null) {
+	parseLinkString(str: string, view?: MarkdownView | null, settingProperty?: string | null) {
 		let url: string | null = null;
 		let displayText: string | null = null;
 		let external: boolean;
@@ -384,7 +392,7 @@ export default class SimpleBanner extends Plugin {
 
 		external = /^https?:\/\//i.test(url);
 
-		if (url.startsWith('obsidian://open')) {
+		if (this.isObsidianUrl(url)) {
 			const str = url.replace('obsidian://open', '');
 			const params = new URLSearchParams(str);
 			let file = params.get('file');
@@ -425,7 +433,7 @@ export default class SimpleBanner extends Plugin {
 				if (activeFile) {
 					// noinspection JSIgnoredPromiseFromCall
 					this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
-						const propName = this.settings.imageProperty;
+						const propName = settingProperty || this.settingProperties.image;
 						frontmatter[propName] = `[[${file?.path}]]`
 					});
 				}
@@ -437,6 +445,10 @@ export default class SimpleBanner extends Plugin {
 			external,
 			...options,
 		};
+	}
+
+	isObsidianUrl(url: string): boolean {
+		return url.startsWith('obsidian://open')
 	}
 
 	parseImageProperties(str: string): ImageProperties {
@@ -468,7 +480,7 @@ export default class SimpleBanner extends Plugin {
 		return oldopt.url === newopt.url;
 	}
 
-	getIconData(icon: string): IconData {
+	getIconData(icon: string, view?: MarkdownView | null): IconData {
 		const str = icon || '';
 		const out = { value: null, type: IconType.Text } as IconData;
 
@@ -481,10 +493,13 @@ export default class SimpleBanner extends Plugin {
 		} else if (/^https?:\/\//i.test(icon)) {
 			// External URL found
 			out.type = IconType.Link;
+		} else if (this.isObsidianUrl(icon)) {
+			// Obsidian URL found
+			out.type = IconType.Link;
 		}
 
 		if (out.type === IconType.Link) {
-			const data = this.parseLinkString(str);
+			const data = this.parseLinkString(str, view, this.settingProperties.icon);
 			out.value = data.url;
 		} else {
 			out.value = str;
@@ -508,7 +523,7 @@ export default class SimpleBanner extends Plugin {
 		temp.style.left = '-9999px';
 		temp.textContent = textContent;
 		document.body.appendChild(temp);
-		const size = this.settings.iconSize;
+		const size = this.deviceSettings.iconSize;
 		const checkWidth = size - 16;
 
 		let fontSize = size; // Start big
