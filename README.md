@@ -2,27 +2,40 @@
 
 Enhance your Obsidian notes with a visually striking banner image at the top, seamlessly integrated with your content. This plugin also intelligently manages the display of your frontmatter properties, ensuring they remain accessible without overlapping your chosen banner.
 
+### Latest Update: `v0.2.0`:
+
+* Now you can haz icons! [See the update video below](#features-demo-v020) for more details.
+* Autohiding of the Frontmatter properties is now optional
+* Customize the Look and Feel for every device you use. **The settings are now per device.**
+* Various UX improvements and smaller bugfixes
+
 
 
 ## Key features
 
 * Easily add banner images to your notes and control their options using **a single frontmatter property**.
-* Frontmatter property name is **customizable**.
 * Supports **external** and **internal** images (Image URLs, Wikilink, Markdown links and Obsidian URLs).
+* **Want an icon? We got icons!** With support for Text, Emojis and external as well as internal images (secondary frontmatter property required though).
+* Frontmatter properties are **customizable**.
 * Property value is **always a well-formed url/link**, so you can use it for other things as well - like [Dataview](https://github.com/blacksmithgu/obsidian-dataview).
-* **Visually appealing and UX friendly:** All your Frontmatter properties are neatly tucked away, but easily accessible if needed.
+* **Visually appealing and UX friendly:** Autohide your Frontmatter properties nicely or keep them close to you.
 * Options to control **image repeat** and horizontal/vertical **offset**.
-* **Customizable banner height** for different device types (desktop, tablet, mobile).
-* Adjustable **border radius for each corner** individually.
-* Adjustable **padding**.
-* **Optional fade effect to blend the banner** with the note content.
+* **Customize to your hearts content:** all settings can be change on a per device basis (desktop, tablet, mobile).
 * Highly optimized plugin that is **fast** and **small**.
 
 
 
 ## Demo
 
+#### Features Demo v0.1.0
 https://github.com/user-attachments/assets/1418a892-f31b-4298-9892-7fa745e02532
+
+
+
+#### Features Demo v0.2.0
+https://github.com/user-attachments/assets/b8b7f552-5f68-4f0a-ad5f-c0d208df30e7
+
+
 
 ## Examples
 
@@ -117,29 +130,40 @@ banner: [20x20,repeat](path/image.jpg)
 ---
 ```
 
+Now that you got the basics down? Want to add an icon? It's a simple as:
+```yaml
+---
+banner: [[path/image.jpg|20x20,repeat]]
+icon: ❤️
+---
+```
+
 
 
 
 ## Settings
 
-You can customize the appearance and behavior of Simple Banner. The following settings are available:
+Since `0.2.0` you can customize the appearance and behavior of Simple Banner per device.
 
-**Global Settings:**
+> [!NOTE]
+>
+> * You will only see the settings that are relevant for the device you are currently using.
+> * Earlier settings will be migrated, so you don't loose your current settings.
 
-- **Note Offset:** Adjust the vertical position (+/-) of the note content below the banner in pixels.
-- **Border Radius:** Set the border radius for each of the four corners of the banner image in pixels (top-left, top-right, bottom-right, bottom-left).
-- **Padding:** Control the spacing between the banner image and the edges of the note in pixels.
-- **Fade:** Toggle whether to apply a fade effect to the bottom of the banner image.
+The settings can bebroken down into two sections:
 
-**Height Settings:**
+**Simple Banner - Device specific settings:**
 
-- **Desktop:** Define the banner height for desktop devices in pixels.
-- **Tablet:** Define the banner height for tablet devices in pixels.
-- **Mobile:** Define the banner height for mobile devices in pixels.
+* Enable or disable Simple Banner
+* If enabled it will reveal all the customization options to you
+* You can also enable or disable the icon here
+* If you enable the icon, more settings will be available to you
 
 **Frontmatter Settings:**
 
-- **Property Name:** Change the name of the frontmatter property that the plugin looks for (default is `banner`).
+- These settings are global
+- **Banner Property:** Change the name of the banner frontmatter property that the plugin looks for (default is `banner`).
+- **Icon Property:** Change the name of the iocn frontmatter property that the plugin looks for (default is `icon`).
 
 
 
@@ -166,4 +190,4 @@ If you find any issues or have suggestions for improvements, feel free to open a
 
 ---
 
-**Enjoy adding Banners to your notes!**
+**Enjoy adding Banners and Icons to your notes!**

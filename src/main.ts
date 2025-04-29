@@ -1,60 +1,62 @@
 import {
-	App,
 	MarkdownView,
 	Platform,
 	Plugin,
-	PluginSettingTab,
-	Setting,
 	TFile,
 	Workspace,
 	WorkspaceLeaf,
 } from 'obsidian';
+import {
+	Settings,
+	SettingsMigrator,
+	SimpleBannerSettings,
+	PropertySettings,
+	DeviceSettings,
+} from "./settings";
 
 //----------------------------------
 // Interfaces
 //----------------------------------
-interface SimpleBannerSettings {
-	offset: number;
-	radius: Array<number>;
-	padding: number;
-	fade: boolean;
-	desktopHeight: number;
-	tabletHeight: number;
-	mobileHeight: number;
-	propertyName: string;
-}
-
-const DEFAULT_SETTINGS: SimpleBannerSettings = {
-	offset: -32,
-	radius: [8, 8, 8, 8],
-	padding: 8,
-	fade: true,
-	desktopHeight: 240,
-	mobileHeight: 160,
-	tabletHeight: 190,
-	propertyName: 'banner',
-}
-
 interface BannerData {
-	path: string | null;
-	value: string | null;
-	isNewValue: boolean;
-	isUpdate: boolean;
+	filepath: string | null;
+	image: string | null;
+	icon: string | null,
 	viewMode: ViewMode | null;
 	lastViewMode: ViewMode | null;
+	isImageChange: boolean;
+	isImagePropsUpdate: boolean;
+	isIconChange: boolean;
+	needsUpdate: boolean;
 	container: HTMLElement | null;
 }
 
-interface BannerOptions {
+interface ImageProperties {
 	x: number;
 	y: number;
 	repeatable: boolean;
+}
+
+interface IconData {
+	value: string | null,
+	type: IconType,
+}
+
+enum IconType {
+	Link = 'link',
+	Text = 'text',
 }
 
 enum ViewMode {
 	Source = 'source',
 	Reading = 'preview',
 }
+
+const RegExpression = {
+	Wikilink: /^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/,
+	Markdown: /^!?\[([^\]]*)\]\(([^)]+?)\)$/,
+	MarkdownBare: /^!?<([^>]+)>$/,
+	Weblink: /^https?:\/\//i,
+};
 
 export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
@@ -64,6 +66,9 @@ export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
 	workspace: Workspace;
 	settings: SimpleBannerSettings;
+	deviceSettings: DeviceSettings;
+	settingProperties: PropertySettings;
+
 
 	//---------------------------------------------------
 	//
@@ -74,14 +79,13 @@ export default class SimpleBanner extends Plugin {
 		this.workspace = this.app.workspace;
 
 		await this.loadSettings();
-		this.addSettingTab(new SettingTab(this.app, this));
+		this.addSettingTab(new Settings(this.app, this));
 
 		this.app.workspace.onLayoutReady(() => {
-			this.applySettings();
 			this.registerEvent(this.workspace.on('layout-change', this.process.bind(this)));
 			this.registerEvent(this.workspace.on('file-open', this.handleFileEvents.bind(this)));
 			this.registerEvent(this.app.metadataCache.on('changed', this.handleMetaEvents.bind(this)));
-			this.processAll();
+			this.applySettings();
 		});
 	}
 
@@ -98,9 +102,13 @@ export default class SimpleBanner extends Plugin {
 		this.app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
 			const view = leaf.view as MarkdownView;
 			if (view) {
-				const file = view?.file || null;
-				const options = this.computeBannerData(file, view);
-				this.process(options || null);
+				if (this.deviceSettings.bannerEnabled) {
+					const file = view?.file || null;
+					const options = this.computeBannerData(file, view);
+					this.process(options || null);
+				} else {
+					this.removeBanner();
+				}
 			}
 		});
 	}
@@ -110,14 +118,31 @@ export default class SimpleBanner extends Plugin {
 		if (!opts) {
 			return;
 		}
-		if (!opts.value) {
+		if (!opts.image) {
 			this.removeBanner();
 			return;
 		}
-		this.updateBanner(opts);
+		if (!opts.icon) {
+			opts.needsUpdate = true;
+		}
+		if (this.deviceSettings.bannerEnabled) {
+			this.updateBanner(opts);
+		}
 	}
 
 	updateBanner(options: BannerData) {
+		const {
+			image,
+			icon,
+			viewMode,
+			lastViewMode,
+			container,
+			needsUpdate,
+			isImageChange,
+			isImagePropsUpdate,
+			isIconChange,
+		} = options;
+
 		const propsContainer = document.querySelector('.metadata-container');
 		if (propsContainer) {
 			const parent = propsContainer.parentNode;
@@ -126,43 +151,82 @@ export default class SimpleBanner extends Plugin {
 			}
 		}
 
-		const { value, isNewValue, isUpdate, viewMode, lastViewMode, container } = options;
-		if (lastViewMode !== viewMode || isNewValue) {
-			if (container && isNewValue) {
-				const view = this.getActiveView();
-				const containers = container.querySelectorAll('.markdown-reading-view > .markdown-preview-view, .cm-scroller');
-				containers.forEach((c) => {
-					let element = (c.querySelector('.simple-banner') || document.createElement('div')) as HTMLElement;
-					element.classList.add('simple-banner');
+		if (container && (lastViewMode !== viewMode || needsUpdate)) {
+			const view = this.getActiveView();
+			let calculatedFontSize: string | null = null;
+			const { url, repeatable, x, y } = this.parseLinkString(image || '', view);
+			const containers = container.querySelectorAll('.markdown-reading-view > .markdown-preview-view, .cm-scroller');
+			containers.forEach((c) => {
+				let element = (c.querySelector('.simple-banner') || document.createElement('div')) as HTMLElement;
+				element.classList.add('simple-banner');
 
-					if (isNewValue) {
-						const { url, repeatable, x, y } = this.parseLinkString(value || '', view);
+				const STATIC_CSS = 'static';
 
-						element.classList.remove('static');
-						this.setCSSVariables({
-							'--smpbn-url': `url(${url}`,
-							'--smpbn-img-x': `${x}px`,
-							'--smpbn-img-y': `${y}px`,
-							'--smpbn-size': repeatable ? 'auto' : 'cover',
-							'--smpbn-repeat': repeatable ? 'repeat' : 'no-repeat',
-						}, container);
-
-						if (isUpdate) {
-							element.classList.add('static');
-						} else {
-							c.prepend(element);
-							element.onanimationend = () => {
-								const banners = document.querySelectorAll('.simple-banner');
-								banners.forEach(b => b.classList.add('static'));
-							}
-						}
+				if (isImageChange || isImagePropsUpdate) {
+					if (isImageChange) {
+						element.classList.remove(STATIC_CSS);
 					}
-				});
 
-				options.isNewValue = false;
-				options.lastViewMode = viewMode;
-				container.dataset.sb = JSON.stringify(options);
-			}
+					this.setCSSVariables({
+						'url': `url(${url})`,
+						'img-x': `${x}px`,
+						'img-y': `${y}px`,
+						'size': repeatable ? 'auto' : 'cover',
+						'repeat': repeatable ? 'repeat' : 'no-repeat',
+					}, container);
+				}
+
+				let iconContainer = element.querySelector('.icon');
+				const hadIconContainer = iconContainer !== null;
+				if (hadIconContainer) {
+					iconContainer?.classList.add(STATIC_CSS);
+				}
+				if (this.deviceSettings.iconEnabled && icon) {
+					if (!hadIconContainer) {
+						iconContainer = document.createElement('div');
+						iconContainer.classList.add('icon');
+						if (Platform.isWin) {
+							iconContainer.classList.add('is-windows');
+						}
+						const div = document.createElement('div');
+						iconContainer.appendChild(div);
+						element.prepend(iconContainer);
+					}
+
+					if (iconContainer) {
+						const iconelement = iconContainer.querySelector('div') as HTMLElement;
+
+						let { value, type } = this.getIconData(icon, view);
+						value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
+						iconelement.dataset.type = type;
+
+						const iconVars = {} as any;
+						iconVars['icon'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
+
+						if (type === IconType.Text) {
+							calculatedFontSize = calculatedFontSize !== null ? calculatedFontSize : this.getFontsize(value);
+							iconVars['icon-fontsize'] = calculatedFontSize;
+						}
+						this.setCSSVariables(iconVars, iconelement);
+					}
+				} else if (iconContainer) {
+					options.icon = null;
+					iconContainer.remove();
+				}
+
+				if (!isImageChange) {
+					element.classList.add(STATIC_CSS);
+				} else {
+					c.prepend(element);
+					element.onanimationend = () => {
+						const banners = document.querySelectorAll('.simple-banner');
+						banners.forEach(b => b.classList.add(STATIC_CSS));
+					}
+				}
+			});
+
+			options.lastViewMode = viewMode;
+			container.dataset.sb = JSON.stringify(options);
 		}
 	}
 
@@ -172,8 +236,6 @@ export default class SimpleBanner extends Plugin {
 		if (options && container) {
 			const targets = container.querySelectorAll('.simple-banner');
 			targets.forEach((t) => { t.remove() });
-			options.lastViewMode = null;
-			options.value = null;
 			delete container.dataset.sb;
 		}
 	}
@@ -181,39 +243,54 @@ export default class SimpleBanner extends Plugin {
 	computeBannerData(newfile?: TFile | null, targetView?: MarkdownView): BannerData | null {
 		const view = targetView || this.getActiveView();
 		if (view instanceof MarkdownView) {
-			const viewMode = view.getMode() || null;
 			const defaultOptions = this.createDefaultBannerData();
 			let oldopt: BannerData | null = defaultOptions;
 			const container = view.containerEl;
-			if (container?.dataset.sb) {
-				oldopt = JSON.parse(container.dataset.sb) as BannerData || defaultOptions;
-			}
+
 			if (newfile && newfile.path !== view?.file?.path) {
 				oldopt = defaultOptions;
+			} else if (container?.dataset.sb) {
+				oldopt = JSON.parse(container.dataset.sb) as BannerData || defaultOptions;
 			}
 
-			const opt = {
-				path: null,
-				value: null,
-				isNewValue: false,
-				isUpdate: false,
-				viewMode: (viewMode === ViewMode.Reading) ? ViewMode.Reading : ViewMode.Source,
-				lastViewMode: oldopt.viewMode,
-				container: view.containerEl,
-			} as BannerData;
-
+			const opt = this.createDefaultBannerData(view, oldopt.viewMode);
 			const file = view?.file || null;
 			if (file) {
 				const cachedMetadata = this.app.metadataCache.getFileCache(file);
-				const propName = this.settings.propertyName;
 				const frontmatter = cachedMetadata?.frontmatter;
-				if (frontmatter && frontmatter[propName]) {
-					opt.value = frontmatter[propName];
-					opt.path = file.path;
-					if (oldopt.value !== opt.value) {
-						opt.isNewValue = true;
-						if (this.isOptionsUpdate(oldopt.value, opt.value, view)) {
-							opt.isUpdate = true;
+
+				if (frontmatter) {
+					const settingProps = this.settingProperties;
+					const imageProp = settingProps.image;
+					const iconProp = settingProps.icon;
+
+					// parse for image property
+					if (frontmatter[imageProp]) {
+						opt.image = frontmatter[imageProp];
+						opt.filepath = file.path;
+						if (oldopt.image !== opt.image) {
+							opt.needsUpdate = true;
+							opt.isImageChange = true;
+							if (this.isImagePropertiesUpdate(oldopt.image, opt.image, view)) {
+								opt.isImagePropsUpdate = true;
+								opt.isImageChange = false;
+							}
+						}
+					}
+
+					// parse for icon property if enabled
+					if (this.deviceSettings.iconEnabled) {
+						if (frontmatter[iconProp]) {
+							opt.icon = frontmatter[iconProp];
+							opt.filepath = file.path;
+							if (oldopt.icon !== opt.icon) {
+								opt.needsUpdate = true;
+								opt.isIconChange = true;
+							}
+						} else if (oldopt.icon) {
+							opt.icon = null;
+							opt.needsUpdate = true;
+							opt.isIconChange = true;
 						}
 					}
 				}
@@ -227,7 +304,10 @@ export default class SimpleBanner extends Plugin {
 	// Settings Methods
 	//----------------------------------
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = await this.loadData();
+		this.settings = await SettingsMigrator.migrate(Object.assign({}, Settings.DEFAULT_SETTINGS, data), this);
+		this.deviceSettings = this.settings[Settings.currentDevice];
+		this.settingProperties = this.settings.properties;
 	}
 
 	async saveSettings() {
@@ -236,25 +316,48 @@ export default class SimpleBanner extends Plugin {
 	}
 
 	applySettings() {
-		let height = this.settings.desktopHeight;
-		if (Platform.isTablet) {
-			height = this.settings.tabletHeight;
-		} else if (Platform.isMobile) {
-			height = this.settings.mobileHeight;
+		const settings = this.deviceSettings;
+		const height = settings.height;
+		const offset = settings.noteOffset;
+		const radius = settings.bannerRadius;
+		const padding = settings.bannerPadding;
+		const fade = settings.bannerFade;
+		const vars = {} as any;
+
+		vars['height'] = `${height}px`;
+		vars['note-offset'] = `${offset}px`;
+		vars['radius'] = `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`;
+		vars['padding'] = `${padding}px`;
+		vars['fade'] = (fade) ? 'linear-gradient(180deg, var(--background-primary) 25%, transparent)' : 'none';
+
+		if (settings.iconEnabled) {
+			const iconSize = settings.iconSize;
+			const iconRadius = settings.iconRadius;
+			const iconBackground = settings.iconBackground;
+			const iconBorder = settings.iconBorder;
+			const iconAlignment = settings.iconAlignment;
+			const iconOffset = settings.iconOffset;
+
+			vars['icon-size'] = `${iconSize}px`;
+			vars['icon-radius'] = `${iconRadius}px`;
+			vars['icon-background'] = iconBackground ? 'var(--background-primary)' : 'transparent';
+			vars['icon-border'] = `${iconBorder}px`;
+			vars['icon-alignh'] = iconAlignment[0];
+			vars['icon-alignv'] = iconAlignment[1];
+			vars['icon-offset-x'] = `${iconOffset[0]}px`;
+			vars['icon-offset-y'] = `${iconOffset[1]}px`;
 		}
 
-		const offset = this.settings.offset;
-		const radius = this.settings.radius;
-		const padding = this.settings.padding;
-		const fade = this.settings.fade;
+		this.setCSSVariables(vars);
 
-		this.setCSSVariables({
-			'--smpbn-height': `${height}px`,
-			'--smpbn-note-offset': `${offset}px`,
-			'--smpbn-radius': `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`,
-			'--smpbn-padding': `${padding}px`,
-			'--smpbn-fade': (fade) ? 'linear-gradient(180deg, black 25%, transparent)' : 'none',
-		});
+		const AUTOHIDE_CLASS = 'smpbn-autohide';
+		if (this.settings.properties.autohide) {
+			document.body.classList.add(AUTOHIDE_CLASS);
+		} else {
+			document.body.classList.remove(AUTOHIDE_CLASS);
+		}
+
+		this.processAll();
 	}
 
 	//----------------------------------
@@ -263,7 +366,7 @@ export default class SimpleBanner extends Plugin {
 	handleFileEvents(file: TFile) {
 		const options = this.computeBannerData(file);
 		const container = options?.container;
-		if (options && container && file.path !== options.path) {
+		if (options && container && file.path !== options.filepath) {
 			delete container.dataset.sb;
 			this.process();
 		}
@@ -286,21 +389,21 @@ export default class SimpleBanner extends Plugin {
 		return this.workspace.getActiveViewOfType(MarkdownView) || null;
 	}
 
-	parseLinkString(str: string, view?: MarkdownView | null) {
+	parseLinkString(str: string, view?: MarkdownView | null, settingProperty?: string | null) {
 		let url: string | null = null;
 		let displayText: string | null = null;
 		let external: boolean;
 		let obsidianUrl: boolean = false;
 		let options = { x: 0, y: 0, repeatable: false };
 
-		const wikilinkMatch = str.match(/^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/);
+		const wikilinkMatch = str.match(RegExpression.Wikilink);
 		if (wikilinkMatch) {
 			url = wikilinkMatch[1].trim();
 			displayText = wikilinkMatch[3] ? wikilinkMatch[3].trim() : null;
 		}
 
-		const markdownMatch = str.match(/^!?\[([^\]]*)\]\(([^)]+?)\)$/);
-		const markdownBareMatch = str.match(/^!?<([^>]+)>$/);
+		const markdownMatch = str.match(RegExpression.Markdown);
+		const markdownBareMatch = str.match(RegExpression.MarkdownBare);
 		if (markdownMatch) {
 			displayText = markdownMatch[1].trim();
 			url = markdownMatch[2].trim();
@@ -314,9 +417,9 @@ export default class SimpleBanner extends Plugin {
 			displayText = null;
 		}
 
-		external = /^https?:\/\//i.test(url);
+		external = RegExpression.Weblink.test(url);
 
-		if (url.startsWith('obsidian://open')) {
+		if (this.isObsidianUrl(url)) {
 			const str = url.replace('obsidian://open', '');
 			const params = new URLSearchParams(str);
 			let file = params.get('file');
@@ -330,12 +433,12 @@ export default class SimpleBanner extends Plugin {
 
 		const hashIndex = url.indexOf('#');
 		if ((external || obsidianUrl) && hashIndex !== -1) {
-			options = this.parseBannerOptions(url.substring(hashIndex + 1));
+			options = this.parseImageProperties(url.substring(hashIndex + 1));
 			url = url.replace(/#.*/, '').trim();
 		}
 
 		if (displayText) {
-			options = this.parseBannerOptions(displayText);
+			options = this.parseImageProperties(displayText);
 		}
 
 		if (!external) {
@@ -357,7 +460,7 @@ export default class SimpleBanner extends Plugin {
 				if (activeFile) {
 					// noinspection JSIgnoredPromiseFromCall
 					this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
-						const propName = this.settings.propertyName;
+						const propName = settingProperty || this.settingProperties.image;
 						frontmatter[propName] = `[[${file?.path}]]`
 					});
 				}
@@ -371,7 +474,11 @@ export default class SimpleBanner extends Plugin {
 		};
 	}
 
-	parseBannerOptions(str: string): BannerOptions {
+	isObsidianUrl(url: string): boolean {
+		return url.startsWith('obsidian://open');
+	}
+
+	parseImageProperties(str: string): ImageProperties {
 		let repeatable: boolean;
 		let x = 0;
 		let y = 0;
@@ -391,7 +498,7 @@ export default class SimpleBanner extends Plugin {
 		return { x, y, repeatable };
 	}
 
-	isOptionsUpdate(oldstr?: string | null, newstr?: string | null, view?: MarkdownView | null): boolean {
+	isImagePropertiesUpdate(oldstr?: string | null, newstr?: string | null, view?: MarkdownView | null): boolean {
 		if (!oldstr || !newstr) {
 			return false;
 		}
@@ -400,272 +507,78 @@ export default class SimpleBanner extends Plugin {
 		return oldopt.url === newopt.url;
 	}
 
-	setCSSVariables(variables: Record<string, string>, target: HTMLElement = document.documentElement) {
-		const style = target.style;
-		Object.keys(variables).forEach(v => {
-			style.setProperty(v, variables[v]);
-		});
+	getIconData(icon: string, view?: MarkdownView | null): IconData {
+		const str = icon || '';
+		const out = { value: null, type: IconType.Text } as IconData;
+
+		if (RegExpression.Wikilink.test(str)) {
+			out.type = IconType.Link;
+		} else if (RegExpression.Markdown.test(str) || RegExpression.MarkdownBare.test(str)) {
+			out.type = IconType.Link;
+		} else if (RegExpression.Weblink.test(icon)) {
+			out.type = IconType.Link;
+		} else if (this.isObsidianUrl(icon)) {
+			out.type = IconType.Link;
+		}
+
+		if (out.type === IconType.Link) {
+			const data = this.parseLinkString(str, view, this.settingProperties.icon);
+			out.value = data.url;
+		} else {
+			out.value = str;
+		}
+
+		return out;
 	}
 
-	createDefaultBannerData(): BannerData {
+	getFontsize(textContent: string) {
+		const temp = document.createElement('span');
+		temp.setAttribute('style', 'position: absolute; visibility: hidden; white-space: nowrap;');
+		temp.style.padding = '0';
+		temp.style.margin = '0';
+		temp.style.left = '-9999px';
+		temp.textContent = textContent.toUpperCase();
+		document.body.appendChild(temp);
+		const size = this.deviceSettings.iconSize;
+		const checkWidth = size - 16;
+
+		let fontSize = size; // Start big
+		temp.style.fontSize = fontSize + 'px';
+
+		while (temp.offsetWidth > checkWidth && fontSize > 1) {
+			fontSize -= 1;
+			temp.style.fontSize = fontSize + 'px';
+		}
+
+		document.body.removeChild(temp);
+		return `${fontSize}px`;
+	}
+
+	createDefaultBannerData(view?: MarkdownView | null, lastViewMode?: ViewMode | null): BannerData {
+		let viewMode = null;
+		let container = null;
+		if (view) {
+			viewMode = ((view.getMode() || null) === ViewMode.Reading) ? ViewMode.Reading : ViewMode.Source;
+			container = view.containerEl;
+		}
 		return {
-			path: null,
-			value: null,
-			isNewValue: false,
-			isUpdate: false,
-			viewMode: null,
-			lastViewMode: null,
-			container: null,
+			filepath: null,
+			image: null,
+			icon: null,
+			viewMode,
+			lastViewMode: lastViewMode || null,
+			isImagePropsUpdate: false,
+			isImageChange: false,
+			isIconChange: false,
+			needsUpdate: false,
+			container,
 		}
 	}
-}
 
-/**
- * Represents the settings tab for configuring the SimpleBanner plugin.
- *
- */
-class SettingTab extends PluginSettingTab {
-	plugin: SimpleBanner;
-
-	constructor(app: App, plugin: SimpleBanner) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-		containerEl.empty();
-
-		// GLOBALS
-		new Setting(containerEl)
-			.setHeading()
-			.setName('Global Settings');
-
-		new Setting(containerEl)
-			.setName('Note Offset')
-			.setDesc('Move the position of the notes content in pixels.')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.offset = DEFAULT_SETTINGS.offset;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('Enter a number')
-				.setValue(this.plugin.settings.offset.toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.offset;
-					}
-					this.plugin.settings.offset = num;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName('Border Radius')
-			.setDesc('Size of the border radius in pixels.')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.radius = DEFAULT_SETTINGS.radius;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('8')
-				.setValue(this.plugin.settings.radius[0].toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.radius[0];
-					}
-					this.plugin.settings.radius[0] = num;
-					await this.plugin.saveSettings();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('8')
-				.setValue(this.plugin.settings.radius[1].toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.radius[1];
-					}
-					this.plugin.settings.radius[1] = num;
-					await this.plugin.saveSettings();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('8')
-				.setValue(this.plugin.settings.radius[2].toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.radius[2];
-					}
-					this.plugin.settings.radius[2] = num;
-					await this.plugin.saveSettings();
-				})
-			)
-			.addText((text) => {
-				text.setPlaceholder('8')
-					.setValue(this.plugin.settings.radius[3].toString())
-					.onChange(async (value) => {
-						let num = parseInt(value, 10);
-						if (isNaN(num)) {
-							num = DEFAULT_SETTINGS.radius[3];
-						}
-						this.plugin.settings.radius[3] = num;
-						await this.plugin.saveSettings();
-					});
-				text?.inputEl?.parentElement?.classList.add('smpbn-radii');
-				return text;
-			});
-
-		new Setting(containerEl)
-			.setName('Padding')
-			.setDesc('Padding of the image from the edges of the note in pixels.')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.padding = DEFAULT_SETTINGS.padding;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('Enter a number')
-				.setValue(this.plugin.settings.padding.toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.padding;
-					}
-					this.plugin.settings.padding = num;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName('Fade')
-			.setDesc('Fade the image out towards the content.')
-			.addToggle(component => component
-				.setValue(this.plugin.settings.fade)
-				.onChange(async (value) => {
-					this.plugin.settings.fade = value;
-					await this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
-			.setHeading()
-			.setName('Height Settings');
-
-		new Setting(containerEl)
-			.setName('Desktop')
-			.setDesc('Height of the Banner on desktop devices (in pixels).')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.desktopHeight = DEFAULT_SETTINGS.desktopHeight;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('Enter a number')
-				.setValue(this.plugin.settings.desktopHeight.toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.desktopHeight;
-					}
-					this.plugin.settings.desktopHeight = num;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName('Tablet')
-			.setDesc('Height of the Banner on tablet devices (in pixels).')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.tabletHeight = DEFAULT_SETTINGS.tabletHeight;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('Enter a number')
-				.setValue(this.plugin.settings.tabletHeight.toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.tabletHeight;
-					}
-					this.plugin.settings.tabletHeight = num;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName('Mobile')
-			.setDesc('Height of the Banner on mobile devices (in pixels).')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.mobileHeight = DEFAULT_SETTINGS.mobileHeight;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('Enter a number')
-				.setValue(this.plugin.settings.mobileHeight.toString())
-				.onChange(async (value) => {
-					let num = parseInt(value, 10);
-					if (isNaN(num)) {
-						num = DEFAULT_SETTINGS.mobileHeight;
-					}
-					this.plugin.settings.mobileHeight = num;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setHeading()
-			.setName('Frontmatter Settings');
-
-		new Setting(containerEl)
-			.setName('Property Name')
-			.setDesc('Name of the property this plugin should look for in the frontmatter.')
-			.addExtraButton(button => button
-				.setIcon('rotate-ccw')
-				.setTooltip('Restore default')
-				.onClick(async () => {
-					this.plugin.settings.propertyName = DEFAULT_SETTINGS.propertyName;
-					await this.plugin.saveSettings();
-					this.display();
-				})
-			)
-			.addText(text => text
-				.setPlaceholder('Default: banner')
-				.setValue(this.plugin.settings.propertyName.toString())
-				.onChange(async (value) => {
-					this.plugin.settings.propertyName = (value !== '') ? value : DEFAULT_SETTINGS.propertyName;
-					await this.plugin.saveSettings();
-				})
-			);
+	setCSSVariables(variables: Record<string, string>, target: HTMLElement = document.body) {
+		const style = target.style;
+		Object.keys(variables).forEach(k => {
+			style.setProperty(`--smpbn-${k}`, variables[k]);
+		});
 	}
 }
