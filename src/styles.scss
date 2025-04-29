@@ -96,7 +96,7 @@ div.simple-banner {
 				align-items: center;
 				position: absolute;
 				inset: 0;
-				top: calc(0% - (var(--smpbn-icon-fontsize, 0) * 0.05));
+				top: 0;
 				width: 100%;
 				height: 100%;
 				z-index: 1;
@@ -121,6 +121,14 @@ div.simple-banner {
 				background-size: cover;
 				background-position: center;
 				overflow: hidden;
+			}
+		}
+
+		&.is-windows {
+			& > div {
+				&[data-type="text"]:after {
+					top: calc(0% - (var(--smpbn-icon-fontsize, 0) * 0.05));
+				}
 			}
 		}
 

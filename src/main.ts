@@ -1,5 +1,6 @@
 import {
 	MarkdownView,
+	Platform,
 	Plugin,
 	TFile,
 	Workspace,
@@ -182,6 +183,9 @@ export default class SimpleBanner extends Plugin {
 						if (!hadIconContainer) {
 							iconContainer = document.createElement('div');
 							iconContainer.classList.add('icon');
+							if (Platform.isWin) {
+								iconContainer.classList.add('is-windows');
+							}
 							const div = document.createElement('div');
 							iconContainer.appendChild(div);
 							element.prepend(iconContainer);
