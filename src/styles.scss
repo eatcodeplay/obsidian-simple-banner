@@ -236,6 +236,11 @@ body {
 .workspace-leaf-content[data-sb] .view-content > .markdown-source-view.mod-cm6 > .cm-editor > .cm-scroller,
 .workspace-leaf-content[data-sb] .view-content .markdown-preview-view {
 	padding-top: var(--smpbn-height, 240px);
+
+	.inline-embed .el-pre.mod-frontmatter.mod-ui,
+	.inline-embed .markdown-preview-view {
+		padding-top: initial;
+	}
 }
 
 body.smpbn-autohide {

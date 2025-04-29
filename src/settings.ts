@@ -392,32 +392,30 @@ export class Settings extends PluginSettingTab {
 							this.display();
 						}));
 
-				if (settings.iconBackground) {
-					new Setting(containerEl)
-						.setName('Icon Border Size')
-						.setDesc('Size of the border in pixels.')
-						.addExtraButton(button => button
-							.setIcon(ICON_RESET)
-							.setTooltip(TEXT_RESET)
-							.onClick(async () => {
-								settings.iconBorder = defaultSettings.iconBorder;
-								await plugin.saveSettings();
-								this.display();
-							})
-						)
-						.addText(text => text
-							.setPlaceholder('Enter a number')
-							.setValue(settings.iconBorder.toString())
-							.onChange(async (value) => {
-								let num = parseInt(value, 10);
-								if (isNaN(num)) {
-									num = defaultSettings.iconBorder;
-								}
-								settings.iconBorder = num;
-								await plugin.saveSettings();
-							})
-						);
-				}
+				new Setting(containerEl)
+					.setName('Icon Border Size')
+					.setDesc('Size of the border in pixels.')
+					.addExtraButton(button => button
+						.setIcon(ICON_RESET)
+						.setTooltip(TEXT_RESET)
+						.onClick(async () => {
+							settings.iconBorder = defaultSettings.iconBorder;
+							await plugin.saveSettings();
+							this.display();
+						})
+					)
+					.addText(text => text
+						.setPlaceholder('Enter a number')
+						.setValue(settings.iconBorder.toString())
+						.onChange(async (value) => {
+							let num = parseInt(value, 10);
+							if (isNaN(num)) {
+								num = defaultSettings.iconBorder;
+							}
+							settings.iconBorder = num;
+							await plugin.saveSettings();
+						})
+					);
 
 				new Setting(containerEl)
 					.setName('Icon Alignment - Horizontal')

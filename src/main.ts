@@ -176,41 +176,42 @@ export default class SimpleBanner extends Plugin {
 					}, container);
 				}
 
-				if (isIconChange) {
-					let iconContainer = element.querySelector('.icon');
-					const hadIconContainer = iconContainer !== null;
-					if (this.deviceSettings.iconEnabled && icon) {
-						if (!hadIconContainer) {
-							iconContainer = document.createElement('div');
-							iconContainer.classList.add('icon');
-							if (Platform.isWin) {
-								iconContainer.classList.add('is-windows');
-							}
-							const div = document.createElement('div');
-							iconContainer.appendChild(div);
-							element.prepend(iconContainer);
+				let iconContainer = element.querySelector('.icon');
+				const hadIconContainer = iconContainer !== null;
+				if (hadIconContainer) {
+					iconContainer?.classList.add(STATIC_CSS);
+				}
+				if (this.deviceSettings.iconEnabled && icon) {
+					if (!hadIconContainer) {
+						iconContainer = document.createElement('div');
+						iconContainer.classList.add('icon');
+						if (Platform.isWin) {
+							iconContainer.classList.add('is-windows');
 						}
-
-						if (iconContainer) {
-							const iconelement = iconContainer.querySelector('div') as HTMLElement;
-
-							let { value, type } = this.getIconData(icon, view);
-							value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
-							iconelement.dataset.type = type;
-
-							const iconVars = {} as any;
-							iconVars['icon'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
-
-							if (type === IconType.Text) {
-								calculatedFontSize = calculatedFontSize !== null ? calculatedFontSize : this.getFontsize(value);
-								iconVars['icon-fontsize'] = calculatedFontSize;
-							}
-							this.setCSSVariables(iconVars, iconelement);
-						}
-					} else if (iconContainer) {
-						options.icon = null;
-						iconContainer.remove();
+						const div = document.createElement('div');
+						iconContainer.appendChild(div);
+						element.prepend(iconContainer);
 					}
+
+					if (iconContainer) {
+						const iconelement = iconContainer.querySelector('div') as HTMLElement;
+
+						let { value, type } = this.getIconData(icon, view);
+						value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
+						iconelement.dataset.type = type;
+
+						const iconVars = {} as any;
+						iconVars['icon'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
+
+						if (type === IconType.Text) {
+							calculatedFontSize = calculatedFontSize !== null ? calculatedFontSize : this.getFontsize(value);
+							iconVars['icon-fontsize'] = calculatedFontSize;
+						}
+						this.setCSSVariables(iconVars, iconelement);
+					}
+				} else if (iconContainer) {
+					options.icon = null;
+					iconContainer.remove();
 				}
 
 				if (!isImageChange) {
@@ -536,7 +537,7 @@ export default class SimpleBanner extends Plugin {
 		temp.style.padding = '0';
 		temp.style.margin = '0';
 		temp.style.left = '-9999px';
-		temp.textContent = textContent;
+		temp.textContent = textContent.toUpperCase();
 		document.body.appendChild(temp);
 		const size = this.deviceSettings.iconSize;
 		const checkWidth = size - 16;
