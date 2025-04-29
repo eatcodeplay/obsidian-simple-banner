@@ -1,9 +1,9 @@
 {
 	"id": "simple-banner",
 	"name": "Simple Banner",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"minAppVersion": "1.8.9",
-	"description": "Simply add a banner image.",
+	"description": "Simply add a banner image and an icon.",
 	"author": "Sandro Ducceschi",
 	"authorUrl": "https://eatcodeplay.dev",
 	"isDesktopOnly": false
