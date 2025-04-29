@@ -7,10 +7,10 @@ import {
 } from 'obsidian';
 import {
 	Settings,
+	SettingsMigrator,
 	SimpleBannerSettings,
 	PropertySettings,
 	DeviceSettings,
-	DeviceType
 } from "./settings";
 
 //----------------------------------
@@ -50,6 +50,13 @@ enum ViewMode {
 	Reading = 'preview',
 }
 
+const RegExpression = {
+	Wikilink: /^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/,
+	Markdown: /^!?\[([^\]]*)\]\(([^)]+?)\)$/,
+	MarkdownBare: /^!?<([^>]+)>$/,
+	Weblink: /^https?:\/\//i,
+};
+
 export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
 	//
@@ -60,6 +67,7 @@ export default class SimpleBanner extends Plugin {
 	settings: SimpleBannerSettings;
 	deviceSettings: DeviceSettings;
 	settingProperties: PropertySettings;
+
 
 	//---------------------------------------------------
 	//
@@ -151,16 +159,19 @@ export default class SimpleBanner extends Plugin {
 				let element = (c.querySelector('.simple-banner') || document.createElement('div')) as HTMLElement;
 				element.classList.add('simple-banner');
 
+				const STATIC_CSS = 'static';
+
 				if (isImageChange || isImagePropsUpdate) {
 					if (isImageChange) {
-						element.classList.remove('static');
+						element.classList.remove(STATIC_CSS);
 					}
+
 					this.setCSSVariables({
-						'--smpbn-url': `url(${url}`,
-						'--smpbn-img-x': `${x}px`,
-						'--smpbn-img-y': `${y}px`,
-						'--smpbn-size': repeatable ? 'auto' : 'cover',
-						'--smpbn-repeat': repeatable ? 'repeat' : 'no-repeat',
+						'url': `url(${url})`,
+						'img-x': `${x}px`,
+						'img-y': `${y}px`,
+						'size': repeatable ? 'auto' : 'cover',
+						'repeat': repeatable ? 'repeat' : 'no-repeat',
 					}, container);
 				}
 
@@ -183,14 +194,14 @@ export default class SimpleBanner extends Plugin {
 							value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
 							iconelement.dataset.type = type;
 
-							const vars = {} as any;
-							vars['--smpbn-icon'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
+							const iconVars = {} as any;
+							iconVars['icon'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
 
 							if (type === IconType.Text) {
 								calculatedFontSize = calculatedFontSize !== null ? calculatedFontSize : this.getFontsize(value);
-								vars['--smpbn-icon-fontsize'] = calculatedFontSize;
+								iconVars['icon-fontsize'] = calculatedFontSize;
 							}
-							this.setCSSVariables(vars, iconelement);
+							this.setCSSVariables(iconVars, iconelement);
 						}
 					} else if (iconContainer) {
 						options.icon = null;
@@ -199,12 +210,12 @@ export default class SimpleBanner extends Plugin {
 				}
 
 				if (!isImageChange) {
-					element.classList.add('static');
+					element.classList.add(STATIC_CSS);
 				} else {
 					c.prepend(element);
 					element.onanimationend = () => {
 						const banners = document.querySelectorAll('.simple-banner');
-						banners.forEach(b => b.classList.add('static'));
+						banners.forEach(b => b.classList.add(STATIC_CSS));
 					}
 				}
 			});
@@ -289,52 +300,9 @@ export default class SimpleBanner extends Plugin {
 	//----------------------------------
 	async loadSettings() {
 		const data = await this.loadData();
-		this.settings = await this.migrateSettings(Object.assign({}, Settings.DEFAULT_SETTINGS, data));
+		this.settings = await SettingsMigrator.migrate(Object.assign({}, Settings.DEFAULT_SETTINGS, data), this);
 		this.deviceSettings = this.settings[Settings.currentDevice];
 		this.settingProperties = this.settings.properties;
-	}
-
-	async migrateSettings(data: any): Promise<SimpleBannerSettings> {
-		const DESKTOP = DeviceType.Desktop;
-		const TABLET = DeviceType.Tablet;
-		const PHONE = DeviceType.Phone;
-		const migrationMap: { [oldKey: string]: { target: string; devices?: string[] } } = {
-			desktopHeight: { target: 'desktop.height' },
-			tabletHeight: { target: 'tablet.height' },
-			mobileHeight: { target: 'phone.height' },
-			offset: { target: 'noteOffset', devices: [DESKTOP, TABLET, PHONE] },
-			fade: { target: 'bannerFade', devices: [DESKTOP, TABLET, PHONE] },
-			radius: { target: 'bannerRadius', devices: [DESKTOP, TABLET, PHONE] },
-			padding: { target: 'bannerPadding', devices: [DESKTOP, TABLET, PHONE] },
-			propertyName: { target: 'properties.image' },
-		};
-
-		let neededMigration = false;
-		const newData = { ...data };
-
-		for (const oldKey in migrationMap) {
-			if (newData.hasOwnProperty(oldKey) && newData[oldKey] !== undefined) {
-				neededMigration = true;
-				const migration = migrationMap[oldKey];
-
-				if (migration.devices) {
-					migration.devices.forEach((device) => {
-						const path = device + '.' + migration.target;
-						this.setValueByPath(newData, path, newData[oldKey]);
-					});
-				} else {
-					this.setValueByPath(newData, migration.target, newData[oldKey]);
-				}
-				delete newData[oldKey];
-			}
-		}
-
-		if (neededMigration) {
-			console.log('migrated settings:', newData);
-			await this.saveData(newData);
-		}
-
-		return newData;
 	}
 
 	async saveSettings() {
@@ -344,18 +312,18 @@ export default class SimpleBanner extends Plugin {
 
 	applySettings() {
 		const settings = this.deviceSettings;
-		const vars = {} as any;
 		const height = settings.height;
 		const offset = settings.noteOffset;
 		const radius = settings.bannerRadius;
 		const padding = settings.bannerPadding;
 		const fade = settings.bannerFade;
+		const vars = {} as any;
 
-		vars['--smpbn-height'] = `${height}px`;
-		vars['--smpbn-note-offset'] = `${offset}px`;
-		vars['--smpbn-radius'] = `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`;
-		vars['--smpbn-padding'] = `${padding}px`;
-		vars['--smpbn-fade'] = (fade) ? 'linear-gradient(180deg, var(--background-primary) 25%, transparent)' : 'none';
+		vars['height'] = `${height}px`;
+		vars['note-offset'] = `${offset}px`;
+		vars['radius'] = `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`;
+		vars['padding'] = `${padding}px`;
+		vars['fade'] = (fade) ? 'linear-gradient(180deg, var(--background-primary) 25%, transparent)' : 'none';
 
 		if (settings.iconEnabled) {
 			const iconSize = settings.iconSize;
@@ -365,17 +333,25 @@ export default class SimpleBanner extends Plugin {
 			const iconAlignment = settings.iconAlignment;
 			const iconOffset = settings.iconOffset;
 
-			vars['--smpbn-icon-size'] = `${iconSize}px`;
-			vars['--smpbn-icon-radius'] = `${iconRadius}px`;
-			vars['--smpbn-icon-background'] = iconBackground ? 'var(--background-primary)' : 'transparent';
-			vars['--smpbn-icon-border'] = `${iconBorder}px`;
-			vars['--smpbn-icon-alignh'] = iconAlignment[0];
-			vars['--smpbn-icon-alignv'] = iconAlignment[1];
-			vars['--smpbn-icon-offset-x'] = `${iconOffset[0]}px`;
-			vars['--smpbn-icon-offset-y'] = `${iconOffset[1]}px`;
+			vars['icon-size'] = `${iconSize}px`;
+			vars['icon-radius'] = `${iconRadius}px`;
+			vars['icon-background'] = iconBackground ? 'var(--background-primary)' : 'transparent';
+			vars['icon-border'] = `${iconBorder}px`;
+			vars['icon-alignh'] = iconAlignment[0];
+			vars['icon-alignv'] = iconAlignment[1];
+			vars['icon-offset-x'] = `${iconOffset[0]}px`;
+			vars['icon-offset-y'] = `${iconOffset[1]}px`;
 		}
 
 		this.setCSSVariables(vars);
+
+		const AUTOHIDE_CLASS = 'smpbn-autohide';
+		if (this.settings.properties.autohide) {
+			document.body.classList.add(AUTOHIDE_CLASS);
+		} else {
+			document.body.classList.remove(AUTOHIDE_CLASS);
+		}
+
 		this.processAll();
 	}
 
@@ -415,14 +391,14 @@ export default class SimpleBanner extends Plugin {
 		let obsidianUrl: boolean = false;
 		let options = { x: 0, y: 0, repeatable: false };
 
-		const wikilinkMatch = str.match(/^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/);
+		const wikilinkMatch = str.match(RegExpression.Wikilink);
 		if (wikilinkMatch) {
 			url = wikilinkMatch[1].trim();
 			displayText = wikilinkMatch[3] ? wikilinkMatch[3].trim() : null;
 		}
 
-		const markdownMatch = str.match(/^!?\[([^\]]*)\]\(([^)]+?)\)$/);
-		const markdownBareMatch = str.match(/^!?<([^>]+)>$/);
+		const markdownMatch = str.match(RegExpression.Markdown);
+		const markdownBareMatch = str.match(RegExpression.MarkdownBare);
 		if (markdownMatch) {
 			displayText = markdownMatch[1].trim();
 			url = markdownMatch[2].trim();
@@ -436,7 +412,7 @@ export default class SimpleBanner extends Plugin {
 			displayText = null;
 		}
 
-		external = /^https?:\/\//i.test(url);
+		external = RegExpression.Weblink.test(url);
 
 		if (this.isObsidianUrl(url)) {
 			const str = url.replace('obsidian://open', '');
@@ -494,7 +470,7 @@ export default class SimpleBanner extends Plugin {
 	}
 
 	isObsidianUrl(url: string): boolean {
-		return url.startsWith('obsidian://open')
+		return url.startsWith('obsidian://open');
 	}
 
 	parseImageProperties(str: string): ImageProperties {
@@ -530,17 +506,13 @@ export default class SimpleBanner extends Plugin {
 		const str = icon || '';
 		const out = { value: null, type: IconType.Text } as IconData;
 
-		if (/^!?\[\[([^\]]+?)(\|([^\]]+?))?\]\]$/.test(str)) {
-			// Wikilink found
+		if (RegExpression.Wikilink.test(str)) {
 			out.type = IconType.Link;
-		} else if (/^!?\[([^\]]*)\]\(([^)]+?)\)$/.test(str) || /^!?<([^>]+)>$/.test(str)) {
-			// Markdown link found
+		} else if (RegExpression.Markdown.test(str) || RegExpression.MarkdownBare.test(str)) {
 			out.type = IconType.Link;
-		} else if (/^https?:\/\//i.test(icon)) {
-			// External URL found
+		} else if (RegExpression.Weblink.test(icon)) {
 			out.type = IconType.Link;
 		} else if (this.isObsidianUrl(icon)) {
-			// Obsidian URL found
 			out.type = IconType.Link;
 		}
 
@@ -552,13 +524,6 @@ export default class SimpleBanner extends Plugin {
 		}
 
 		return out;
-	}
-
-	setCSSVariables(variables: Record<string, string>, target: HTMLElement = document.body) {
-		const style = target.style;
-		Object.keys(variables).forEach(v => {
-			style.setProperty(v, variables[v]);
-		});
 	}
 
 	getFontsize(textContent: string) {
@@ -605,16 +570,10 @@ export default class SimpleBanner extends Plugin {
 		}
 	}
 
-	setValueByPath(obj: any, path: string, value: any) {
-		const parts = path.split('.');
-		let current = obj;
-		for (let i = 0; i < parts.length - 1; i++) {
-			const part = parts[i];
-			if (!current[part] || typeof current[part] !== 'object') {
-				current[part] = {};
-			}
-			current = current[part];
-		}
-		current[parts[parts.length - 1]] = value;
+	setCSSVariables(variables: Record<string, string>, target: HTMLElement = document.body) {
+		const style = target.style;
+		Object.keys(variables).forEach(k => {
+			style.setProperty(`--smpbn-${k}`, variables[k]);
+		});
 	}
 }
