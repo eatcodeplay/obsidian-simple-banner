@@ -103,7 +103,7 @@ const TEXT_RESET = 'Restore default';
  * Represents the settings tab for configuring the SimpleBanner plugin.
  *
  */
-export default class Settings extends PluginSettingTab {
+export class Settings extends PluginSettingTab {
 	plugin: SimpleBanner;
 
 	constructor(app: App, plugin: SimpleBanner) {
@@ -510,7 +510,7 @@ export default class Settings extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setHeading()
-			.setName('Frontmatter Settings');
+			.setName('Frontmatter Settings (Global)');
 
 		new Setting(containerEl)
 			.setName('Banner Property')
