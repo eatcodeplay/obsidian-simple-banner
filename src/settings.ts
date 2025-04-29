@@ -84,7 +84,7 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		bannerFade: true,
 
 		iconEnabled: false,
-		iconSize: 96,
+		iconSize: 56,
 		iconRadius: 8,
 		iconBackground: true,
 		iconBorder: 2,
