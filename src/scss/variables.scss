@@ -1,0 +1,39 @@
+body {
+	/* Banner Variables */
+	--sb-padding: 8px;
+	--sb-radius: 0px;
+	--sb-height: 240px;
+	--sb-url: none;
+	--sb-repeat: no-repeat;
+	--sb-size: cover;
+	--sb-img-x: 0;
+	--sb-img-y: 0;
+	--sb-mask: linear-gradient(180deg, var(--background-primary) 25%, transparent);
+
+	/* Icon Variables */
+	--sb-icon-align-h: flex-start;
+	--sb-icon-align-v: flex-end;
+	--sb-icon-size-w: 96px;
+	--sb-icon-size-h: 96px;
+	--sb-icon-background: rgb(from var(--background-primary) r g b / 80%);
+	--sb-icon-border: 0;
+	--sb-icon-offset-x: 0;
+	--sb-icon-offset-y: 0;
+	--sb-icon-radius: 8px;
+	--sb-icon-value: '';
+	--sb-icon-fontsize: inherit;
+
+	/* Datetime Variables */
+	--sb-dt-align-h: flex-start;
+	--sb-dt-align-v: flex-end;
+	--sb-dt-gap: var(--size-4-2);
+	--sb-dt-offset-x: 0;
+	--sb-dt-offset-y: 0;
+	--sb-dt-fontfamily-time: inherit;
+	--sb-dt-fontweight-time: inherit;
+	--sb-dt-fontsize-time: initial;
+	--sb-dt-fontfamily-date: inherit;
+	--sb-dt-fontweight-date: inherit;
+	--sb-dt-fontsize-date: initial;
+	--sb-dt-textshadow: initial;
+}
