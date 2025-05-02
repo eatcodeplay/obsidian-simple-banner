@@ -1,11 +1,33 @@
-import { BannerData, ImageOptions } from '../types/interfaces';
+import { BannerData, DeviceSettings, ImageOptions } from '../types/interfaces';
 import { CSSClasses, CSSValue } from '../types/enums';
 import DomUtils from '../utils/domutils';
+import SimpleBanner from '../main';
+import { FeatureBase } from './base';
 
 const MAIN_SELECTOR = `.${CSSClasses.Main}`;
 
-export default class Banner {
-	static update(data: BannerData, imgOptions: ImageOptions, containers: NodeListOf<HTMLElement>): HTMLElement[] {
+export default class Banner extends FeatureBase {
+	//----------------------------------
+	// Variables
+	//----------------------------------
+
+	//----------------------------------
+	// Constructor
+	//----------------------------------
+	constructor(plugin: SimpleBanner, settings: DeviceSettings) {
+		super(plugin, settings);
+	}
+
+	//----------------------------------
+	// Lifecycle
+	//----------------------------------
+	destroy() {
+	}
+
+	//----------------------------------
+	// Methods
+	//----------------------------------
+	update(data: BannerData, imgOptions: ImageOptions, containers: NodeListOf<HTMLElement>): HTMLElement[] {
 		const { isImageChange, isImagePropsUpdate } = data;
 		const banners: HTMLElement[] = [];
 
@@ -31,7 +53,7 @@ export default class Banner {
 		return banners;
 	}
 
-	static insert(banners: HTMLElement[], containers: NodeListOf<HTMLElement>): void {
+	inject(banners: HTMLElement[], containers: NodeListOf<HTMLElement>): void {
 		containers.forEach((container, index) => {
 			const banner: HTMLElement = banners[index];
 			container.prepend(banner);
@@ -42,7 +64,7 @@ export default class Banner {
 		});
 	}
 
-	static replace(banners: HTMLElement[]): void {
+	replace(banners: HTMLElement[]): void {
 		banners.forEach((banner) => {
 			banner.classList.add(CSSClasses.Static);
 		})

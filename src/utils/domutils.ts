@@ -1,11 +1,13 @@
 import SimpleBanner from '../main';
 
 let instance: SimpleBanner;
+
 export default class DomUtils {
 	static init(plugin: SimpleBanner) {
 		instance = plugin;
 	}
-	static calculateFontsize(textContent: string) {
+
+	static calculateFontsize(textContent: string, iconSize: number): string {
 		const temp = document.createElement('span');
 		temp.setAttribute('style', 'position: absolute; visibility: hidden; white-space: nowrap;');
 		temp.style.padding = '0';
@@ -13,7 +15,7 @@ export default class DomUtils {
 		temp.style.left = '-9999px';
 		temp.textContent = textContent.toUpperCase();
 		document.body.appendChild(temp);
-		const size = instance.deviceSettings.iconSize;
+		const size = iconSize;
 		const checkWidth = size - 16;
 
 		let fontSize = size; // Start big

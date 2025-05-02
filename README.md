@@ -1,13 +1,13 @@
 # Simple Banner
 
-Enhance your Obsidian notes with a visually striking banner image at the top, seamlessly integrated with your content. This plugin also intelligently manages the display of your frontmatter properties, ensuring they remain accessible without overlapping your chosen banner.
+Enhance your Obsidian notes with header images, icons, dates and times. Flexible, customizable - fun! 🥳
 
-### Latest Update: `v0.2.0`:
+### Latest Update: `v0.3.0`:
 
-* Now you can haz icons! [See the update video below](#features-demo-v020) for more details.
-* Autohiding of the Frontmatter properties is now optional
-* Customize the Look and Feel for every device you use. **The settings are now per device.**
-* Various UX improvements and smaller bugfixes
+* **New feature:** Show a Date/Time in your Banner. [See the update video below](#features-demo-v030) for more information.
+* **Full refactor:** Future proofing the code for better performance, while still remaining fast and small.
+* **Settings UX/UI improvements:** Helping you navigate through the options jungle a bit more easily.
+* Added a full [CSS snippet example](https://github.com/eatcodeplay/obsidian-simple-banner/blob/main/examples/snippets.css) for all you customization nerds ❤️
 
 
 
@@ -16,6 +16,7 @@ Enhance your Obsidian notes with a visually striking banner image at the top, se
 * Easily add banner images to your notes and control their options using **a single frontmatter property**.
 * Supports **external** and **internal** images (Image URLs, Wikilink, Markdown links and Obsidian URLs).
 * **Want an icon? We got icons!** With support for Text, Emojis and external as well as internal images (secondary frontmatter property required though).
+* **Want to add time and dates?** Yup, that's also supported.
 * Frontmatter properties are **customizable**.
 * Property value is **always a well-formed url/link**, so you can use it for other things as well - like [Dataview](https://github.com/blacksmithgu/obsidian-dataview).
 * **Visually appealing and UX friendly:** Autohide your Frontmatter properties nicely or keep them close to you.
@@ -33,6 +34,12 @@ https://github.com/user-attachments/assets/1418a892-f31b-4298-9892-7fa745e02532
 
 
 #### Features Demo v0.2.0
+https://github.com/user-attachments/assets/b8b7f552-5f68-4f0a-ad5f-c0d208df30e7
+
+
+
+#### Features Demo v0.3.0
+
 https://github.com/user-attachments/assets/b8b7f552-5f68-4f0a-ad5f-c0d208df30e7
 
 

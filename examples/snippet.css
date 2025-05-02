@@ -1,0 +1,173 @@
+/* -------------------------------
+  All available variables
+------------------------------- */
+body {
+	/*
+	 * The variables used within are default Obsidian variables
+	 * you can find out more about those here:
+	 * https://docs.obsidian.md/Reference/CSS+variables/About+styling
+	 */
+
+
+	/* -------------------------------
+	  Banner Variables
+	------------------------------- */
+
+	/* Banner padding from the edges of the note */
+	--sb-padding: 8px;
+	/* Border radii for the container */
+	--sb-radius: 0px;
+	/* Overrall height of the container */
+	--sb-height: 240px;
+	/* URL for the image */
+	--sb-url: none;
+	/* Background repeat */
+	--sb-repeat: no-repeat;
+	/* Background position */
+	--sb-size: cover;
+	/* Background image offsets */
+	--sb-img-x: 0;
+	--sb-img-y: 0;
+	/* Mask that is applied over the image */
+	--sb-mask: linear-gradient(180deg, var(--background-primary) 25%, transparent);
+
+	/* -------------------------------
+	  Icon Variables
+	------------------------------- */
+
+	/* Horizontal alignment of the icon */
+	--sb-icon-align-h: flex-start;
+	/* Vertical alignment of the icon */
+	--sb-icon-align-v: flex-end;
+	/* Icon width */
+	--sb-icon-size-w: 96px;
+	/* Icon height */
+	--sb-icon-size-h: 96px;
+	/* Icon offsets */
+	--sb-icon-offset-x: 0;
+	--sb-icon-offset-y: 0;
+	/* Icon border radius */
+	--sb-icon-radius: 8px;
+	/* Icon text content or image url */
+	--sb-icon-value: '';
+	/** Icon text fontsize - is calculated automagically by default */
+	--sb-icon-fontsize: inherit;
+	/** Icon background color */
+	--sb-icon-background: rgb(from var(--background-primary) r g b / 80%);
+	/** Icon border thickness */
+	--sb-icon-border: 0;
+
+	/* -------------------------------
+	  Datetime Variables
+	------------------------------- */
+
+	/* Horizontal alignment of the datetime */
+	--sb-dt-align-h: flex-end;
+	/* Vertical alignment of the datetime */
+	--sb-dt-align-v: flex-start;
+	/* Text alignment */
+	--sb-dt-align-text: auto;
+	/* Gap between time and date */
+	--sb-dt-gap: var(--size-4-1);
+	/* Datetime offsets */
+	--sb-dt-offset-x: 0;
+	--sb-dt-offset-y: 0;
+
+	/* Time text color */
+	--sb-dt-color-time: rgb(from var(--text-normal) r g b / 98%);
+	/* Date text color */
+	--sb-dt-color-date: rgb(from var(--text-normal) r g b / 98%);
+	/* Time font family */
+	--sb-dt-fontfamily-time: inherit;
+	/* Time font weight */
+	--sb-dt-fontweight-time: var(--font-semibold);
+	/* Time font size */
+	--sb-dt-fontsize-time: 3rem;
+	/* Date font family */
+	--sb-dt-fontfamily-date: inherit;
+	/* Date font weight */
+	--sb-dt-fontweight-date: var(--font-semibold);
+	/* Date font size */
+	--sb-dt-fontsize-date: initial;
+	/* Textshadow applied to both time and date */
+	--sb-dt-textshadow:
+		0 0 12px rgb(from var(--background-primary) r g b / 65%),
+		0 0 6px rgb(from var(--background-primary) r g b / 100%);
+	/* mix-blend-mode applied to the entire datetime container */
+	--sb-dt-blendmode: none;
+	/* filter applied to the entire datetime container */
+	--sb-dt-filter: none;
+}
+
+
+/* -------------------------------
+  Main Banner Container
+------------------------------- */
+div.simple-banner {
+	/*
+	 * This is the main container.
+	 * You most likely won't have to change anything here.
+	 * Look into /src/scss/banner.scss for the current implementation
+	*/
+}
+div.simple-banner:before {
+	/* Shadow Layer underneath */
+}
+div.simple-banner:after {
+	/* This where the image will be loaded into */
+}
+
+
+/* -------------------------------
+  Icon
+------------------------------- */
+div.simple-banner > div.icon {
+	/*
+	 * This is the main icon container.
+	 * You most likely won't have to change anything here.
+	 * This container controlles the horizontal / vertical alignment
+	 * Look into /src/scss/icon.scss for the current implementation
+	 */
+}
+
+div.simple-banner > div.icon > div {
+	/*
+	 * This is the actual icon.
+	 * This holds the background-color, controls the border,
+	 * border radii and the overall offset, as well as the width and height.
+	 */
+}
+
+div.simple-banner > div.icon > div[data-type="text"]:after {
+	/* If the content is text, it will be placed here */
+}
+div.simple-banner > div.icon > div[data-type="link"]:after {
+	/* If the content is a link/image, it will be placed here */
+}
+
+
+/* -------------------------------
+  Icon
+------------------------------- */
+div.simple-banner > div.date-time {
+	/*
+	 * This is the main datetime container.
+	 * You most likely won't have to change anything here.
+	 * This container controlles the horizontal / vertical alignment
+	 * Look into /src/scss/datetime.scss for the current implementation
+	 */
+}
+div.simple-banner > div.date-time > time {
+	/*
+	 * This is the actual datetime container.
+	 * This will receive the offsets, and filter variable.
+	 */
+}
+
+div.simple-banner > div.date-time > time > span:first-child {
+	/* This holds the time part */
+}
+
+div.simple-banner > div.date-time > time > span:last-child {
+	/* The holds the date part */
+}

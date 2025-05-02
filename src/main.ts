@@ -1,13 +1,14 @@
 import { MarkdownView, Plugin, TFile, WorkspaceLeaf, } from 'obsidian';
 import { BannerData, DeviceSettings, PropertySettings, SimpleBannerSettings } from './types/interfaces';
 import { CSSClasses, CSSValue, ViewMode } from './types/enums';
-import Settings from './settings/core';
+import Settings from './settings/settings';
 import SettingsMigrator from './settings/migrator';
 import Store from './data/store';
 import DomUtils from './utils/domutils';
 import Parse from './utils/parse';
 import Banner from './feature/banner';
 import Icon from './feature/icon';
+import Datetime from './feature/datetime';
 
 export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
@@ -15,9 +16,12 @@ export default class SimpleBanner extends Plugin {
 	//  Variables
 	//
 	//---------------------------------------------------
-	settings: SimpleBannerSettings;
-	deviceSettings: DeviceSettings;
-	settingProperties: PropertySettings;
+	public settings: SimpleBannerSettings;
+	public settingProperties: PropertySettings;
+	protected deviceSettings: DeviceSettings;
+	protected featBanner: Banner;
+	protected featIcon: Icon;
+	protected featDatetime: Datetime;
 
 	//---------------------------------------------------
 	//
@@ -34,6 +38,10 @@ export default class SimpleBanner extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new Settings(app, this));
 
+		this.featBanner = new Banner(this, this.deviceSettings);
+		this.featIcon = new Icon(this, this.deviceSettings);
+		this.featDatetime = new Datetime(this, this.deviceSettings);
+
 		workspace.onLayoutReady(() => {
 			this.registerEvent(workspace.on('layout-change', this.handleLayoutChange.bind(this)));
 			this.registerEvent(workspace.on('file-open', this.handleFileOpen.bind(this)));
@@ -43,6 +51,10 @@ export default class SimpleBanner extends Plugin {
 	}
 
 	onunload() {
+		const { featBanner, featIcon, featDatetime } = this;
+		featBanner.destroy();
+		featIcon.destroy();
+		featDatetime.destroy();
 	}
 
 	//---------------------------------------------------
@@ -91,11 +103,11 @@ export default class SimpleBanner extends Plugin {
 			const cachedMetadata = this.app.metadataCache.getFileCache(file);
 			const frontmatter = cachedMetadata?.frontmatter;
 
-
 			if (frontmatter) {
 				const settingProps = this.settingProperties;
 				const imageProp = settingProps.image;
 				const iconProp = settingProps.icon;
+				const datetimeProp = settingProps.datetime;
 
 				// parse for image property
 				if (frontmatter[imageProp]) {
@@ -127,6 +139,20 @@ export default class SimpleBanner extends Plugin {
 						newdata.needsUpdate = true;
 					}
 				}
+
+				// parse for datetime property if enabled
+				if (this.deviceSettings.datetimeEnabled) {
+					if (frontmatter[datetimeProp]) {
+						newdata.datetime = frontmatter[datetimeProp];
+						newdata.filepath = file.path;
+						if (olddata.datetime !== newdata.datetime) {
+							newdata.needsUpdate = true;
+						}
+					} else if (olddata.datetime) {
+						newdata.datetime = null;
+						newdata.needsUpdate = true;
+					}
+				}
 			}
 			return newdata;
 		}
@@ -135,12 +161,14 @@ export default class SimpleBanner extends Plugin {
 
 	render(data: BannerData) {
 		const { image, viewMode, lastViewMode, view, needsUpdate, isImageChange } = data;
-		const propsContainer = document.querySelector('.metadata-container');
 
-		if (propsContainer) {
-			const parent = propsContainer.parentNode;
-			if (parent && parent.firstChild !== propsContainer) {
-				parent.prepend(propsContainer);
+		if (this.settings.properties.autohide) {
+			const propsContainer = document.querySelector('.metadata-container');
+			if (propsContainer) {
+				const parent = propsContainer.parentNode;
+				if (parent && parent.firstChild !== propsContainer) {
+					parent.prepend(propsContainer);
+				}
 			}
 		}
 
@@ -148,20 +176,20 @@ export default class SimpleBanner extends Plugin {
 		if (container && (lastViewMode !== viewMode || needsUpdate)) {
 			const containers = container.querySelectorAll('.cm-scroller, .markdown-reading-view > .markdown-preview-view') as NodeListOf<HTMLElement>;
 			const imageOptions = Parse.link(image || '', view);
-			const settings = this.deviceSettings;
+			const { featBanner, featIcon, featDatetime } = this;
 
-			// process features
-			const banners = Banner.update(data, imageOptions, containers);
-			Icon.update(data, banners, settings);
+			const banners = featBanner.update(data, imageOptions, containers);
+			featIcon.update(data, banners);
+			featDatetime.update(data, banners);
 
-			// apply changes
 			if (!isImageChange) {
-				Banner.replace(banners);
+				featBanner.replace(banners);
 			} else {
-				Banner.insert(banners, containers);
+				featBanner.inject(banners, containers);
 			}
 
-			// Store new state
+			featDatetime.check();
+
 			data.lastViewMode = viewMode;
 			container.dataset.sb = '';
 			// @ts-ignore
@@ -190,7 +218,8 @@ export default class SimpleBanner extends Plugin {
 	//----------------------------------
 	async loadSettings() {
 		const data = await this.loadData();
-		this.settings = await SettingsMigrator.migrate(Object.assign({}, Settings.DEFAULT_SETTINGS, data), this);
+		const mergedData = Settings.prepare(data);
+		this.settings = await SettingsMigrator.migrate(mergedData, this);
 		this.deviceSettings = this.settings[Settings.currentDevice];
 		this.settingProperties = this.settings.properties;
 	}
@@ -234,6 +263,15 @@ export default class SimpleBanner extends Plugin {
 			vars['icon-background'] = iconBackground ? CSSValue.RevertLayer : CSSValue.Transparent;
 		}
 
+		if (settings.datetimeEnabled) {
+			const dtAlignment = settings.datetimeAlignment;
+			const dtOffset = settings.datetimeOffset;
+			vars['dt-align-h'] = dtAlignment[0];
+			vars['dt-align-v'] = dtAlignment[1];
+			vars['dt-offset-x'] = `${dtOffset[0]}px`;
+			vars['dt-offset-y'] = `${dtOffset[1]}px`;
+		}
+
 		DomUtils.setCSSVariables(vars);
 
 		if (this.settings.properties.autohide) {
@@ -258,6 +296,7 @@ export default class SimpleBanner extends Plugin {
 		} else {
 			Store.delete(this.getMostRecentLeafId());
 		}
+		this.featDatetime.check();
 	}
 
 	handleFileOpen(file: TFile) {
@@ -298,6 +337,7 @@ export default class SimpleBanner extends Plugin {
 			filepath: null,
 			image: null,
 			icon: null,
+			datetime: null,
 			viewMode,
 			lastViewMode: lastViewMode || null,
 			isImagePropsUpdate: false,

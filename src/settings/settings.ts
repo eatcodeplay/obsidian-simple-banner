@@ -1,4 +1,4 @@
-import { App, Platform, PluginSettingTab, Setting } from 'obsidian';
+import { App, Platform, PluginSettingTab, sanitizeHTMLToDom, Setting } from 'obsidian';
 import SimpleBanner from '../main';
 import { DeviceType } from '../types/enums';
 import { SettingCompOptions, SimpleBannerSettings } from '../types/interfaces';
@@ -19,6 +19,13 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		iconBorder: 2,
 		iconAlignment: ['flex-start', 'flex-end'],
 		iconOffset: [0, -24],
+
+		datetimeEnabled: false,
+		datetimeOnPropOnly: false,
+		datetimeAlignment: ['flex-end', 'flex-start'],
+		datetimeOffset: [0, 0],
+		datetimeTimeFormat: 'HH:mm',
+		datetimeDateFormat: 'dddd, MMMM Do YYYY'
 	},
 
 	tablet: {
@@ -36,6 +43,13 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		iconBorder: 2,
 		iconAlignment: ['flex-start', 'flex-end'],
 		iconOffset: [0, -24],
+
+		datetimeEnabled: false,
+		datetimeOnPropOnly: false,
+		datetimeAlignment: ['flex-end', 'flex-start'],
+		datetimeOffset: [0, 0],
+		datetimeTimeFormat: 'HH:mm',
+		datetimeDateFormat: 'dddd, MMMM Do YYYY'
 	},
 
 	phone: {
@@ -53,12 +67,20 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		iconBorder: 2,
 		iconAlignment: ['flex-start', 'flex-end'],
 		iconOffset: [0, -24],
+
+		datetimeEnabled: false,
+		datetimeOnPropOnly: false,
+		datetimeAlignment: ['flex-end', 'flex-start'],
+		datetimeOffset: [0, 0],
+		datetimeTimeFormat: 'HH:mm',
+		datetimeDateFormat: 'dddd, MMMM Do YYYY'
 	},
 
 	properties: {
 		autohide: true,
 		image: 'banner',
 		icon: 'icon',
+		datetime: 'datetime',
 	},
 }
 const ICON_RESET = 'rotate-ccw';
@@ -86,8 +108,21 @@ export default class Settings extends PluginSettingTab {
 		return DeviceType.Desktop;
 	}
 
-	static get DEFAULT_SETTINGS(): SimpleBannerSettings {
-		return DEFAULT_SETTINGS;
+	static prepare(data: any): SimpleBannerSettings {
+		const isObject = (obj: any) => obj && typeof obj === 'object' && !Array.isArray(obj);
+		const merged: SimpleBannerSettings = { ...DEFAULT_SETTINGS };
+
+		for (const key in data) {
+			if (data.hasOwnProperty(key)) {
+				const dataValue = data[key];
+				if (isObject(dataValue) && merged.hasOwnProperty(key) && isObject(merged[key])) {
+					merged[key] = { ...merged[key], ...dataValue };
+				} else {
+					merged[key] = dataValue as any;
+				}
+			}
+		}
+		return merged;
 	}
 
 	display(): void {
@@ -101,6 +136,7 @@ export default class Settings extends PluginSettingTab {
 		if (settings.bannerEnabled) {
 			this.createFrontmatterSettings();
 			this.createIconSettings();
+			this.createDatetimeSettings();
 		}
 	}
 
@@ -110,7 +146,7 @@ export default class Settings extends PluginSettingTab {
 		const settings = this.plugin.settings[currentDevice];
 		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
 
-		this.addHeading(`Simple Banner - ${prettyDevice} Settings`);
+		this.addHeading(`Simple Banner - ${prettyDevice} Settings`, ['sbs-heading']);
 		this.addToggle({
 			title: 'Show Simple Banner',
 			description: `Enable or disable Simple Banner on your ${currentDevice} device.`,
@@ -127,14 +163,14 @@ export default class Settings extends PluginSettingTab {
 
 			this.addNumber({
 				title: 'Padding',
-				description: `Padding of the banner from the edges of the note in pixels.`,
+				description: 'Padding of the banner from the edges of the note in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.bannerPadding,
 			}, settings, 'bannerPadding');
 
 			this.addNumber({
 				title: 'Note Offset',
-				description: `Move the position of the notes content in pixels.`,
+				description: 'Move the position of the notes content in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.noteOffset,
 			}, settings, 'noteOffset');
@@ -142,7 +178,7 @@ export default class Settings extends PluginSettingTab {
 
 			this.addNumber({
 				title: 'Border Radius',
-				description: `Size of the border radius in pixels.`,
+				description: 'Size of the border radius in pixels.',
 				placeholder: '8',
 				isValueArray: true,
 				length: 4,
@@ -152,7 +188,7 @@ export default class Settings extends PluginSettingTab {
 
 			this.addToggle({
 				title: 'Fade',
-				description: `Fade the image out towards the content.`,
+				description: 'Fade the image out towards the content.',
 				classes: ['sbs-spacer'],
 			}, settings, 'bannerFade');
 		}
@@ -162,10 +198,10 @@ export default class Settings extends PluginSettingTab {
 		const plugin = this.plugin;
 		const settings = plugin.settings;
 
-		this.addHeading('Frontmatter Settings (Global)');
+		this.addHeading('Frontmatter Settings (Global)', ['sbs-heading']);
 		this.addToggle({
 			title: 'Autohide Frontmatter/Properties',
-			description: `Enable or disables the frontmatter/properties autohide feature.`,
+			description: 'Enable or disables the frontmatter/properties autohide feature.',
 		}, settings.properties, 'autohide');
 
 		this.addText({
@@ -180,8 +216,15 @@ export default class Settings extends PluginSettingTab {
 			description: 'Name of the icon property this plugin will look for in the frontmatter.',
 			placeholder: 'Default: icon',
 			resetValue: DEFAULT_SETTINGS.properties.icon,
-			classes: ['sbs-spacer'],
 		}, settings.properties, 'icon');
+
+		this.addText({
+			title: 'Datetime Property',
+			description: 'Name of the datetime property this plugin will look for in the frontmatter.',
+			placeholder: 'Default: datetime',
+			resetValue: DEFAULT_SETTINGS.properties.datetime,
+			classes: ['sbs-spacer'],
+		}, settings.properties, 'datetime');
 	}
 
 	createIconSettings() {
@@ -189,43 +232,43 @@ export default class Settings extends PluginSettingTab {
 		const settings = this.plugin.settings[currentDevice];
 		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
 
-		this.addHeading(`Icon Settings`);
+		this.addHeading(`Icon Settings`, ['sbs-heading']);
 		this.addToggle({
 			title: 'Show Icon',
-			description: `Enable or disable the icon.`,
+			description: 'Enable or disable the icon.',
 			refreshOnUpdate: true,
 		}, settings, 'iconEnabled');
 
 		if (settings.iconEnabled) {
 			this.addNumber({
 				title: 'Icon Size',
-				description: `Size of the icon in pixels.`,
+				description: 'Size of the icon in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.iconSize,
 			}, settings, 'iconSize');
 
 			this.addToggle({
 				title: 'Icon Background',
-				description: `Enable or disable the icon background.`,
+				description: 'Enable or disable the icon background.',
 			}, settings, 'iconBackground');
 
 			this.addNumber({
 				title: 'Border Size',
-				description: `Size of the border in pixels.`,
+				description: 'Size of the border in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.iconBorder,
 			}, settings, 'iconBorder');
 
 			this.addNumber({
 				title: 'Border Radius',
-				description: `Size of the border radius in pixels.`,
+				description: 'Size of the border radius in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.iconRadius,
 			}, settings, 'iconRadius');
 
 			this.addDropdown({
 				title: 'Icon Alignment - Horizontal',
-				description: `Horizontal alignment of the icon.`,
+				description: 'Horizontal alignment of the icon.',
 				choices: [
 					{ label: 'Left', value: 'flex-start' },
 					{ label: 'Middle', value: 'center' },
@@ -257,11 +300,81 @@ export default class Settings extends PluginSettingTab {
 		}
 	}
 
+	createDatetimeSettings() {
+		const currentDevice = Settings.currentDevice;
+		const settings = this.plugin.settings[currentDevice];
+		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
+
+		this.addHeading(`Datetime Settings`, ['sbs-heading']);
+		this.addToggle({
+			title: 'Show Datetime',
+			description: 'Enable or disable the display of a datetime.',
+			refreshOnUpdate: true,
+		}, settings, 'datetimeEnabled');
+
+		if (settings.datetimeEnabled) {
+			this.addToggle({
+				title: 'Only with Property',
+				description: 'Show datetime only when a property is set in the note',
+			}, settings, 'datetimeOnPropOnly');
+
+			this.addText({
+				title: 'Time Formatting',
+				description: sanitizeHTMLToDom('Define how time should be displayed. Leave empty to disable.<br/>Obsidian uses moment.js for formatting. <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Learn more</a>'),
+				placeholder: 'Default: HH:mm:ss',
+				allowEmpty: true,
+				resetValue: defaultSettings.datetimeTimeFormat,
+			}, settings, 'datetimeTimeFormat');
+
+			this.addText({
+				title: 'Date Formatting',
+				description: sanitizeHTMLToDom('Define how the date should be displayed. Leave empty to disable.<br/>Obsidian uses moment.js for formatting. <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Learn more</a>'),
+				placeholder: 'Default: dddd, MMMM Do YYYY',
+				allowEmpty: true,
+				resetValue: defaultSettings.datetimeDateFormat,
+			}, settings, 'datetimeDateFormat');
+
+			this.addDropdown({
+				title: 'Datetime Alignment - Horizontal',
+				description: 'Horizontal alignment of the datetime.',
+				choices: [
+					{ label: 'Left', value: 'flex-start' },
+					{ label: 'Middle', value: 'center' },
+					{ label: 'Right', value: 'flex-end' },
+				],
+				allowEmpty: true,
+				resetValue: defaultSettings.datetimeAlignment[0],
+			}, settings, 'datetimeAlignment', 0);
+
+			this.addDropdown({
+				title: 'Datetime Alignment - Vertical',
+				description: 'Vertical alignment of the datetime.',
+				choices: [
+					{ label: 'Top', value: 'flex-start' },
+					{ label: 'Middle', value: 'center' },
+					{ label: 'Bottom', value: 'flex-end' },
+				],
+				resetValue: defaultSettings.datetimeAlignment[1],
+			}, settings, 'datetimeAlignment', 1);
+
+			this.addNumber({
+				title: 'Datetime Offset',
+				description: 'Offset the X and Y position of the datetime in pixels',
+				placeholder: '0',
+				isValueArray: true,
+				length: 2,
+				resetValue: defaultSettings.iconOffset,
+				classes: ['sbs-grid-xy', 'sbs-spacer'],
+			}, settings, 'datetimeOffset');
+		}
+	}
+
 	//----------------------------------
 	// Helper Methods
 	//----------------------------------
-	addHeading(text: string) {
-		new Setting(this.containerEl).setHeading().setName(text);
+	addHeading(text: string, classes?: string[]) {
+		const instance = new Setting(this.containerEl).setHeading().setName(text);
+		this.setClasses(instance, classes);
 	}
 
 	addToggle(options: SettingCompOptions, obj: any, prop: string) {
@@ -373,7 +486,12 @@ export default class Settings extends PluginSettingTab {
 			}
 			text.setValue(obj[prop].toString())
 				.onChange(async (value) => {
-					obj[prop] = (value !== '') ? value : resetValue || '';
+					if (options.allowEmpty) {
+						obj[prop] = value;
+					} else {
+						obj[prop] = (value !== '') ? value : resetValue || '';
+
+					}
 					await this.plugin.saveSettings();
 					if (options.refreshOnUpdate) {
 						this.display();

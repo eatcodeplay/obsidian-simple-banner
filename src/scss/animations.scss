@@ -13,3 +13,8 @@
 	from { transform: translateX(10px) }
 	to { transform: translateX(0) }
 }
+
+@keyframes datetime-anim {
+	from { transform: translateY(10px) }
+	to { transform: translateY(0) }
+}

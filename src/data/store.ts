@@ -1,7 +1,5 @@
 import { BannerData, Datastore } from '../types/interfaces';
 
-
-
 const storage = {} as Datastore;
 
 export default class Store {

@@ -1,7 +1,7 @@
 {
 	"name": "simple-banner",
-	"version": "0.2.0",
-	"description": "Simply add a banner image and an icon",
+	"version": "0.3.0",
+	"description": "Simply add a banner image. Addtionally supports icons, showing time or dates.",
 	"main": "dist/main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
@@ -16,7 +16,6 @@
 	"author": "Sandro Ducceschi",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/lodash": "^4.17.16",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
@@ -27,7 +26,5 @@
 		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
-	},
-	"dependencies": {
 	}
 }

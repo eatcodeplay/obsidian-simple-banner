@@ -15,25 +15,32 @@ body {
 	--sb-icon-align-v: flex-end;
 	--sb-icon-size-w: 96px;
 	--sb-icon-size-h: 96px;
-	--sb-icon-background: rgb(from var(--background-primary) r g b / 80%);
-	--sb-icon-border: 0;
 	--sb-icon-offset-x: 0;
 	--sb-icon-offset-y: 0;
 	--sb-icon-radius: 8px;
 	--sb-icon-value: '';
 	--sb-icon-fontsize: inherit;
+	--sb-icon-background: rgb(from var(--background-primary) r g b / 80%);
+	--sb-icon-border: 0;
 
 	/* Datetime Variables */
 	--sb-dt-align-h: flex-start;
 	--sb-dt-align-v: flex-end;
-	--sb-dt-gap: var(--size-4-2);
+	--sb-dt-align-text: auto;
+	--sb-dt-gap: var(--size-4-1);
 	--sb-dt-offset-x: 0;
 	--sb-dt-offset-y: 0;
+	--sb-dt-color-time: rgb(from var(--text-normal) r g b / 98%);
+	--sb-dt-color-date: rgb(from var(--text-normal) r g b / 98%);
 	--sb-dt-fontfamily-time: inherit;
-	--sb-dt-fontweight-time: inherit;
-	--sb-dt-fontsize-time: initial;
+	--sb-dt-fontweight-time: var(--font-semibold);
+	--sb-dt-fontsize-time: 3rem;
 	--sb-dt-fontfamily-date: inherit;
-	--sb-dt-fontweight-date: inherit;
+	--sb-dt-fontweight-date: var(--font-semibold);
 	--sb-dt-fontsize-date: initial;
-	--sb-dt-textshadow: initial;
+	--sb-dt-textshadow:
+			0 0 12px rgb(from var(--background-primary) r g b / 65%),
+			0 0 6px rgb(from var(--background-primary) r g b / 100%);
+	--sb-dt-blendmode: none;
+	--sb-dt-filter: none;
 }

@@ -1,50 +1,71 @@
 import { Platform } from 'obsidian';
 import { BannerData, DeviceSettings } from '../types/interfaces';
 import { CSSClasses, IconType } from '../types/enums';
+import { FeatureBase } from './base';
 import DomUtils from '../utils/domutils';
 import Parse from '../utils/parse';
+import SimpleBanner from '../main';
 
-export default class Icon {
-	static update(data: BannerData, banners: HTMLElement[], settings: DeviceSettings) {
+export default class Icon extends FeatureBase {
+	//----------------------------------
+	// Variables
+	//----------------------------------
+
+	//----------------------------------
+	// Constructor
+	//----------------------------------
+	constructor(plugin: SimpleBanner, settings: DeviceSettings) {
+		super(plugin, settings);
+	}
+
+	//----------------------------------
+	// Lifecycle
+	//----------------------------------
+	destroy() {
+	}
+
+	//----------------------------------
+	// Methods
+	//----------------------------------
+	update(data: BannerData, banners: HTMLElement[]) {
+		const { iconEnabled, iconSize } = this.settings;
 		let calculatedFontSize: string | null = null;
 		banners.forEach((banner) => {
 			const { icon, view } = data;
-			let iconContainer = banner.querySelector(`.${CSSClasses.Icon}`) || null;
-			const hadIconContainer = iconContainer !== null;
-			if (hadIconContainer) {
-				iconContainer?.classList.add(CSSClasses.Static);
+			let container = banner.querySelector(`.${CSSClasses.Icon}`) || null;
+			const hasContainer = container !== null;
+			if (hasContainer) {
+				container?.classList.add(CSSClasses.Static);
 			}
-			if (settings.iconEnabled && icon) {
-				if (!hadIconContainer) {
-					iconContainer = document.createElement('div');
-					iconContainer.classList.add(CSSClasses.Icon);
+			if (iconEnabled && icon) {
+				if (!hasContainer) {
+					container = document.createElement('div');
+					container.classList.add(CSSClasses.Icon);
 					if (Platform.isWin) {
-						iconContainer.classList.add(CSSClasses.IsWindows);
+						container.classList.add(CSSClasses.IsWindows);
 					}
 					const div = document.createElement('div');
-					iconContainer.appendChild(div);
-					banner.prepend(iconContainer);
+					container.appendChild(div);
+					banner.prepend(container);
 				}
 
-				if (iconContainer) {
-					const iconelement = iconContainer.querySelector('div') as HTMLElement;
+				const iconElement = container?.querySelector('div') as HTMLElement;
+				let { value, type } = Parse.icon(icon, view);
 
-					let { value, type } = Parse.icon(icon, view);
-					value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
-					iconelement.dataset.type = type;
+				value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
+				iconElement.dataset.type = type;
 
-					const iconVars = {} as any;
-					iconVars['icon-value'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
+				const vars = {} as any;
+				vars['icon-value'] = type === IconType.Link ? `url(${value})` : `"${value}"`;
 
-					if (type === IconType.Text) {
-						calculatedFontSize = calculatedFontSize ? calculatedFontSize : DomUtils.calculateFontsize(value);
-						iconVars['icon-fontsize'] = calculatedFontSize;
-					}
-					DomUtils.setCSSVariables(iconVars, iconelement);
+				if (type === IconType.Text) {
+					calculatedFontSize = calculatedFontSize ? calculatedFontSize : DomUtils.calculateFontsize(value, iconSize);
+					vars['icon-fontsize'] = calculatedFontSize;
 				}
-			} else if (iconContainer) {
+				DomUtils.setCSSVariables(vars, iconElement);
+			} else if (hasContainer) {
 				data.icon = null;
-				iconContainer.remove();
+				container?.remove();
 			}
 		});
 	}

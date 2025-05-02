@@ -8,6 +8,7 @@ export interface BannerData {
 	filepath: string | null;
 	image: string | null;
 	icon: string | null,
+	datetime: string | null,
 	viewMode: ViewMode | null;
 	lastViewMode: ViewMode | null;
 	isImageChange: boolean;
@@ -41,6 +42,8 @@ export interface SimpleBannerSettings {
 	tablet: DeviceSettings
 	phone: DeviceSettings
 	properties: PropertySettings;
+
+	[key: string]: any;
 }
 
 export interface DeviceSettings {
@@ -58,17 +61,25 @@ export interface DeviceSettings {
 	iconBorder: number;
 	iconAlignment: Array<string>;
 	iconOffset: Array<number>;
+
+	datetimeEnabled: boolean;
+	datetimeOnPropOnly: boolean,
+	datetimeAlignment: Array<string>;
+	datetimeOffset: Array<number>;
+	datetimeTimeFormat: string;
+	datetimeDateFormat: string;
 }
 
 export interface PropertySettings {
 	autohide: boolean;
 	image: string;
 	icon: string;
+	datetime: string;
 }
 
 export interface SettingCompOptions {
 	title?: string;
-	description?: string;
+	description?: string | DocumentFragment;
 	placeholder?: string;
 	placeholders?: Array<string>;
 	choices?: ValueLabelPair[];
@@ -78,6 +89,7 @@ export interface SettingCompOptions {
 	isValueArray?: boolean,
 	length?: number,
 	resetValue?: any,
+	allowEmpty?: boolean,
 	refreshOnUpdate?: boolean;
 }
 
