@@ -5,7 +5,7 @@ Enhance your Obsidian notes with header images, icons, dates and times. Flexible
 ### Latest Update: `v0.3.0`:
 
 * **New feature:** Show a Date/Time in your Banner. [See the update video below](#features-demo-v030) for more information.
-* **Full refactor:** Future proofing the code for better performance, while still remaining fast and small.
+* **Full refactor:** Future proofing the code for future enhancements, while still remaining fast and small.
 * **Settings UX/UI improvements:** Helping you navigate through the options jungle a bit more easily.
 * Added a full [CSS snippet example](https://github.com/eatcodeplay/obsidian-simple-banner/blob/main/examples/snippets.css) for all you customization nerds ❤️
 
