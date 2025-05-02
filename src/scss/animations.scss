@@ -1,0 +1,20 @@
+/* -------------------------------
+  Animations
+------------------------------- */
+@keyframes fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@keyframes banner-anim {
+	from { background-position-y: calc(50% + (var(--sb-img-y, 0) - 10px)); }
+	to { background-position-y: calc(50% + var(--sb-img-y, 0)); }
+}
+@keyframes icon-anim {
+	from { transform: translateX(10px) }
+	to { transform: translateX(0) }
+}
+
+@keyframes datetime-anim {
+	from { transform: translateY(10px) }
+	to { transform: translateY(0) }
+}

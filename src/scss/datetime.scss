@@ -1,0 +1,63 @@
+/* -------------------------------
+  Icon
+------------------------------- */
+div.simple-banner {
+	& > div.date-time {
+		position: absolute;
+		display: flex;
+		justify-content: var(--sb-dt-align-h);
+		align-items: var(--sb-dt-align-v);
+		width: 100%;
+		height: 100%;
+		z-index: 2;
+		margin: 0 auto;
+		inset: 0;
+		transform: translate(0, 0);
+		padding: var(--sb-padding);
+		animation: fade-in 0.7s linear forwards, datetime-anim 0.8s ease-out forwards;
+		will-change: transform, opacity;
+		user-select: none;
+		mix-blend-mode: var(--sb-dt-blendmode);
+
+		& > time {
+			position: relative;
+			display: inline-flex;
+			flex-direction: column;
+			gap: var(--sb-dt-gap);
+			align-items: var(--sb-dt-align-h);
+			transform: translate(var(--sb-dt-offset-x), var(--sb-dt-offset-y));
+			filter: var(--sb-dt-filter);
+			z-index: 2;
+
+			& > span {
+				box-sizing: border-box;
+				display: inline-block;
+				width: fit-content;
+
+				&:empty { display: none; }
+
+				&:first-child {
+					font-family: var(--sb-dt-fontfamily-time), sans-serif;
+					font-weight: var(--sb-dt-fontweight-time);
+					font-size: var(--sb-dt-fontsize-time);
+					text-shadow: var(--sb-dt-textshadow);
+					color: var(--sb-dt-color-time);
+					line-height: 1;
+				}
+				&:last-child {
+					font-family: var(--sb-dt-fontfamily-date), sans-serif;
+					font-weight: var(--sb-dt-fontweight-date);
+					font-size: var(--sb-dt-fontsize-date);
+					text-shadow: var(--sb-dt-textshadow);
+					color: var(--sb-dt-color-date);
+					padding: 0 2px;
+					line-height: 1;
+				}
+			}
+		}
+	}
+
+	&.static > div.date-time {
+		animation: none;
+	}
+}
