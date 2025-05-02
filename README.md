@@ -40,7 +40,7 @@ https://github.com/user-attachments/assets/b8b7f552-5f68-4f0a-ad5f-c0d208df30e7
 
 #### Features Demo v0.3.0
 
-https://github.com/user-attachments/assets/b8b7f552-5f68-4f0a-ad5f-c0d208df30e7
+https://github.com/user-attachments/assets/1bcf82db-9e7c-4e54-b081-ccafdd8c937b
 
 
 
