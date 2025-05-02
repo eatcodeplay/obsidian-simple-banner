@@ -24,7 +24,7 @@ const vaultCopy = {
 					await Promise.all([
 						cp('manifest.json', `${vaultPluginPath}/manifest.json`, { overwrite: true }),
 						cp('dist/main.js', `${vaultPluginPath}/main.js`, { overwrite: true }),
-						cp('dist/main.css', `${vaultPluginPath}/styles.css`, { overwrite: true }),
+						cp('dist/styles.css', `${vaultPluginPath}/styles.css`, { overwrite: true }),
 					]);
 				} catch (copyError) {
 					console.error('Error copying files:', copyError);
@@ -40,7 +40,7 @@ const context = await esbuild.context({
 	},
 	entryPoints: [
 		'src/main.ts',
-		'src/main.scss',
+		'src/styles.scss',
 	],
 	bundle: true,
 	external: [
