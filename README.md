@@ -1,6 +1,8 @@
 # Simple Banner
 
-Enhance your Obsidian notes with header images, icons, dates and times. Flexible, customizable - fun! 🥳
+Enhance your Obsidian notes with header images, icons, dates and times. Flexible, customizable - fun!
+
+![](https://repository-images.githubusercontent.com/973810470/011547eb-2e67-49c0-9d34-3786b8bfdca0)
 
 ### Latest Update: `v0.3.0`:
 
