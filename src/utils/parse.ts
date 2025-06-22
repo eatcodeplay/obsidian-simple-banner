@@ -1,4 +1,4 @@
-import { MarkdownView } from 'obsidian';
+import { MarkdownView, TFile } from 'obsidian';
 import SimpleBanner from '../main';
 import { IconData, ImageOptions } from '../types/interfaces';
 import { IconType } from '../types/enums';
@@ -10,7 +10,7 @@ const RegExpression = {
 	MarkdownBare: /^!?<([^>]+)>$/,
 	Weblink: /^https?:\/\//i,
 };
-
+//
 export default class Parse {
 
 	static init(plugin: SimpleBanner) {
@@ -67,20 +67,30 @@ export default class Parse {
 
 		if (displayText) {
 			options = this.imageProperties(displayText);
-		}
-
-		if (!external) {
+		}		if (!external) {
 			const vault = instance.app.vault;
-			const files = vault.getFiles().filter(f => f.path === url || f.name === url);
-			let file = files.find(f => f.path === url);
+			let file: TFile | null = null;
+			
+			// Try to resolve relative path first if we have a view context
+			if (view && view.file && (url.includes('../') || url.includes('./') || (!url.startsWith('/') && url.includes('/')))) {
+				const currentFilePath = view.file.path;
+				const resolvedPath = instance.app.metadataCache.getFirstLinkpathDest(url, currentFilePath);
+				if (resolvedPath) {
+					file = resolvedPath;
+				}
+			}
+			
+			// Fallback to exact path/name matching if relative resolution failed
+			if (!file) {
+				const files = vault.getFiles().filter(f => f.path === url || f.name === url);
+				file = files.find(f => f.path === url) || null;
+				if (!file) {
+					file = files.find(f => f.name === url) || null;
+				}
+			}
+			
 			if (file) {
 				url = vault.getResourcePath(file);
-			}
-			if (!file) {
-				file = files.find(f => f.name === url);
-				if (file) {
-					url = vault.getResourcePath(file);
-				}
 			}
 
 			if (obsidianUrl && file && view) {
