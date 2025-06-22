@@ -27,10 +27,12 @@ export default class Icon extends FeatureBase {
 	//----------------------------------
 	// Methods
 	//----------------------------------
-	update(data: BannerData, banners: HTMLElement[]) {
+	async update(data: BannerData, banners: HTMLElement[]) {
 		const { iconEnabled, iconSize } = this.settings;
 		let calculatedFontSize: string | null = null;
-		banners.forEach((banner) => {
+
+		for (let i = 0, n = banners.length; i < n; i += 1) {
+			const banner = banners[i];
 			const { icon, view } = data;
 			let container = banner.querySelector(`.${CSSClasses.Icon}`) || null;
 			const hasContainer = container !== null;
@@ -50,7 +52,7 @@ export default class Icon extends FeatureBase {
 				}
 
 				const iconElement = container?.querySelector('div') as HTMLElement;
-				let { value, type } = Parse.icon(icon, view);
+				let { value, type } = await Parse.icon(icon, view);
 
 				value = value?.replace(/([#.:[\\]"])/g, '\\$1') || '';
 				iconElement.dataset.type = type;
@@ -67,6 +69,6 @@ export default class Icon extends FeatureBase {
 				data.icon = null;
 				container?.remove();
 			}
-		});
+		}
 	}
 }

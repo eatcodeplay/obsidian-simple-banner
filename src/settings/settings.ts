@@ -142,13 +142,11 @@ export default class Settings extends PluginSettingTab {
 
 	createBannerSettings() {
 		const currentDevice = Settings.currentDevice;
-		const prettyDevice = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
 		const settings = this.plugin.settings[currentDevice];
 		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
 
-		this.addHeading(`Simple Banner - ${prettyDevice} Settings`, ['sbs-heading']);
 		this.addToggle({
-			title: 'Show Simple Banner',
+			title: 'Show simple banner',
 			description: `Enable or disable Simple Banner on your ${currentDevice} device.`,
 			refreshOnUpdate: true,
 		}, settings, 'bannerEnabled');
@@ -169,7 +167,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'bannerPadding');
 
 			this.addNumber({
-				title: 'Note Offset',
+				title: 'Note offset',
 				description: 'Move the position of the notes content in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.noteOffset,
@@ -177,7 +175,7 @@ export default class Settings extends PluginSettingTab {
 
 
 			this.addNumber({
-				title: 'Border Radius',
+				title: 'Border radius',
 				description: 'Size of the border radius in pixels.',
 				placeholder: '8',
 				isValueArray: true,
@@ -198,28 +196,28 @@ export default class Settings extends PluginSettingTab {
 		const plugin = this.plugin;
 		const settings = plugin.settings;
 
-		this.addHeading('Frontmatter Settings (Global)', ['sbs-heading']);
+		this.addHeading('Frontmatter', ['sbs-heading']);
 		this.addToggle({
-			title: 'Autohide Frontmatter/Properties',
+			title: 'Autohide frontmatter/properties',
 			description: 'Enable or disables the frontmatter/properties autohide feature.',
 		}, settings.properties, 'autohide');
 
 		this.addText({
-			title: 'Banner Property',
+			title: 'Banner property',
 			description: 'Name of the banner property this plugin will look for in the frontmatter.',
 			placeholder: 'Default: banner',
 			resetValue: DEFAULT_SETTINGS.properties.image,
 		}, settings.properties, 'image');
 
 		this.addText({
-			title: 'Icon Property',
+			title: 'Icon property',
 			description: 'Name of the icon property this plugin will look for in the frontmatter.',
 			placeholder: 'Default: icon',
 			resetValue: DEFAULT_SETTINGS.properties.icon,
 		}, settings.properties, 'icon');
 
 		this.addText({
-			title: 'Datetime Property',
+			title: 'Datetime property',
 			description: 'Name of the datetime property this plugin will look for in the frontmatter.',
 			placeholder: 'Default: datetime',
 			resetValue: DEFAULT_SETTINGS.properties.datetime,
@@ -232,42 +230,42 @@ export default class Settings extends PluginSettingTab {
 		const settings = this.plugin.settings[currentDevice];
 		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
 
-		this.addHeading(`Icon Settings`, ['sbs-heading']);
+		this.addHeading(`Icon`, ['sbs-heading']);
 		this.addToggle({
-			title: 'Show Icon',
+			title: 'Show icon',
 			description: 'Enable or disable the icon.',
 			refreshOnUpdate: true,
 		}, settings, 'iconEnabled');
 
 		if (settings.iconEnabled) {
 			this.addNumber({
-				title: 'Icon Size',
+				title: 'Icon size',
 				description: 'Size of the icon in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.iconSize,
 			}, settings, 'iconSize');
 
 			this.addToggle({
-				title: 'Icon Background',
+				title: 'Icon background',
 				description: 'Enable or disable the icon background.',
 			}, settings, 'iconBackground');
 
 			this.addNumber({
-				title: 'Border Size',
+				title: 'Border size',
 				description: 'Size of the border in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.iconBorder,
 			}, settings, 'iconBorder');
 
 			this.addNumber({
-				title: 'Border Radius',
+				title: 'Border radius',
 				description: 'Size of the border radius in pixels.',
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.iconRadius,
 			}, settings, 'iconRadius');
 
 			this.addDropdown({
-				title: 'Icon Alignment - Horizontal',
+				title: 'Icon alignment - horizontal',
 				description: 'Horizontal alignment of the icon.',
 				choices: [
 					{ label: 'Left', value: 'flex-start' },
@@ -278,7 +276,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'iconAlignment', 0);
 
 			this.addDropdown({
-				title: 'Icon Alignment - Vertical',
+				title: 'Icon alignment - vertical',
 				description: 'Vertical alignment of the icon.',
 				choices: [
 					{ label: 'Top', value: 'flex-start' },
@@ -289,7 +287,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'iconAlignment', 1);
 
 			this.addNumber({
-				title: 'Icon Offset',
+				title: 'Icon offset',
 				description: 'Offset the X and Y position of the icon in pixels',
 				placeholder: '0',
 				isValueArray: true,
@@ -305,21 +303,21 @@ export default class Settings extends PluginSettingTab {
 		const settings = this.plugin.settings[currentDevice];
 		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
 
-		this.addHeading(`Datetime Settings`, ['sbs-heading']);
+		this.addHeading(`Datetime`, ['sbs-heading']);
 		this.addToggle({
-			title: 'Show Datetime',
+			title: 'Show datetime',
 			description: 'Enable or disable the display of a datetime.',
 			refreshOnUpdate: true,
 		}, settings, 'datetimeEnabled');
 
 		if (settings.datetimeEnabled) {
 			this.addToggle({
-				title: 'Only with Property',
+				title: 'Only with property',
 				description: 'Show datetime only when a property is set in the note',
 			}, settings, 'datetimeOnPropOnly');
 
 			this.addText({
-				title: 'Time Formatting',
+				title: 'Time formatting',
 				description: sanitizeHTMLToDom('Define how time should be displayed. Leave empty to disable.<br/>Obsidian uses moment.js for formatting. <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Learn more</a>'),
 				placeholder: 'Default: HH:mm:ss',
 				allowEmpty: true,
@@ -327,7 +325,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'datetimeTimeFormat');
 
 			this.addText({
-				title: 'Date Formatting',
+				title: 'Date formatting',
 				description: sanitizeHTMLToDom('Define how the date should be displayed. Leave empty to disable.<br/>Obsidian uses moment.js for formatting. <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Learn more</a>'),
 				placeholder: 'Default: dddd, MMMM Do YYYY',
 				allowEmpty: true,
@@ -335,7 +333,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'datetimeDateFormat');
 
 			this.addDropdown({
-				title: 'Datetime Alignment - Horizontal',
+				title: 'Datetime alignment - horizontal',
 				description: 'Horizontal alignment of the datetime.',
 				choices: [
 					{ label: 'Left', value: 'flex-start' },
@@ -347,7 +345,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'datetimeAlignment', 0);
 
 			this.addDropdown({
-				title: 'Datetime Alignment - Vertical',
+				title: 'Datetime alignment - vertical',
 				description: 'Vertical alignment of the datetime.',
 				choices: [
 					{ label: 'Top', value: 'flex-start' },
@@ -358,7 +356,7 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'datetimeAlignment', 1);
 
 			this.addNumber({
-				title: 'Datetime Offset',
+				title: 'Datetime offset',
 				description: 'Offset the X and Y position of the datetime in pixels',
 				placeholder: '0',
 				isValueArray: true,
@@ -580,4 +578,3 @@ export default class Settings extends PluginSettingTab {
 		}
 	}
 }
-

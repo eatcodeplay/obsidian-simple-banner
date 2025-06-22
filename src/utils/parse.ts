@@ -1,7 +1,7 @@
-import { MarkdownView, TFile } from 'obsidian';
+import { MarkdownView, TFile, request, requestUrl } from 'obsidian';
 import SimpleBanner from '../main';
 import { IconData, ImageOptions } from '../types/interfaces';
-import { IconType } from '../types/enums';
+import { IconType, ContentType } from '../types/enums';
 
 let instance: SimpleBanner;
 const RegExpression = {
@@ -10,14 +10,14 @@ const RegExpression = {
 	MarkdownBare: /^!?<([^>]+)>$/,
 	Weblink: /^https?:\/\//i,
 };
-//
+
 export default class Parse {
 
 	static init(plugin: SimpleBanner) {
 		instance = plugin;
 	}
 
-	static link(str: string, view?: MarkdownView | null, settingProperty?: string | null): ImageOptions {
+	static async link(str: string, view?: MarkdownView | null, settingProperty?: string | null): Promise<ImageOptions> {
 		let url: string | null = null;
 		let displayText: string | null = null;
 		let external: boolean;
@@ -70,8 +70,8 @@ export default class Parse {
 		}		if (!external) {
 			const vault = instance.app.vault;
 			let file: TFile | null = null;
-			
-			// Try to resolve relative path first if we have a view context
+
+			// Try to resolve a relative path first if we have a view context
 			if (view && view.file && (url.includes('../') || url.includes('./') || (!url.startsWith('/') && url.includes('/')))) {
 				const currentFilePath = view.file.path;
 				const resolvedPath = instance.app.metadataCache.getFirstLinkpathDest(url, currentFilePath);
@@ -79,7 +79,7 @@ export default class Parse {
 					file = resolvedPath;
 				}
 			}
-			
+
 			// Fallback to exact path/name matching if relative resolution failed
 			if (!file) {
 				const files = vault.getFiles().filter(f => f.path === url || f.name === url);
@@ -88,7 +88,7 @@ export default class Parse {
 					file = files.find(f => f.name === url) || null;
 				}
 			}
-			
+
 			if (file) {
 				url = vault.getResourcePath(file);
 			}
@@ -105,9 +105,39 @@ export default class Parse {
 			}
 		}
 
+		let type: string | null = null;
+		try {
+			const urlObj = new URL(url);
+			if (urlObj) {
+				const extension = urlObj.pathname.split('.').pop();
+				const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
+				const videoExtensions = ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'avi', 'wmv', 'mpg', 'mpeg', '3gp'];
+				if (extension && imageExtensions.includes(extension)) {
+					type = ContentType.Image;
+				} else if (extension && videoExtensions.includes(extension)) {
+					type = ContentType.Video;
+				}
+			}
+
+			if (!type) {
+				const response = await requestUrl({ url, method: 'HEAD' });
+				const contentType = response?.headers['content-type'] || null;
+				if (contentType) {
+					if (contentType.includes(ContentType.Image)) {
+						type = ContentType.Image;
+					} else if (contentType.includes(ContentType.Video)) {
+						type = ContentType.Video;
+					}
+				}
+			}
+		} catch (err) {
+			console.log(err);
+		}
+
 		return {
 			url: url.trim(),
 			external,
+			type,
 			...options,
 		};
 	}
@@ -132,7 +162,7 @@ export default class Parse {
 		return { x, y, repeatable };
 	}
 
-	static icon(icon: string, view?: MarkdownView | null): IconData {
+	static async icon(icon: string, view?: MarkdownView | null): Promise<IconData> {
 		const str = icon || '';
 		const out = { value: null, type: IconType.Text } as IconData;
 
@@ -147,7 +177,7 @@ export default class Parse {
 		}
 
 		if (out.type === IconType.Link) {
-			const data = this.link(str, view, instance.settingProperties.icon);
+			const data = await this.link(str, view, instance.settingProperties.icon);
 			out.value = data.url;
 		} else {
 			out.value = str;
@@ -156,12 +186,12 @@ export default class Parse {
 		return out;
 	}
 
-	static isImagePropertiesUpdate(oldstr?: string | null, newstr?: string | null, view?: MarkdownView | null): boolean {
+	static async isImagePropertiesUpdate(oldstr?: string | null, newstr?: string | null, view?: MarkdownView | null): Promise<boolean> {
 		if (!oldstr || !newstr) {
 			return false;
 		}
-		const oldopt = this.link(oldstr, view);
-		const newopt = this.link(newstr, view);
+		const oldopt = await this.link(oldstr, view);
+		const newopt = await this.link(newstr, view);
 		return oldopt.url === newopt.url;
 	}
 

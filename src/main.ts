@@ -76,8 +76,8 @@ export default class SimpleBanner extends Plugin {
 		});
 	}
 
-	process(file?: TFile | null, view?: MarkdownView) {
-		const data = this.compute(file, view);
+	async process(file?: TFile | null, view?: MarkdownView) {
+		const data = await this.compute(file, view);
 		if (!data) {
 			return;
 		}
@@ -93,7 +93,7 @@ export default class SimpleBanner extends Plugin {
 		}
 	}
 
-	compute(file?: TFile | null, targetView?: MarkdownView): BannerData | null {
+	async compute(file?: TFile | null, targetView?: MarkdownView): Promise<BannerData | null> {
 		const view = targetView || this.getActiveView();
 		if (file && view instanceof MarkdownView) {
 			const defaultData = this.createDefaultBannerData();
@@ -119,7 +119,7 @@ export default class SimpleBanner extends Plugin {
 					} else if (olddata.image !== newdata.image) {
 						newdata.needsUpdate = true;
 						newdata.isImageChange = true;
-						if (Parse.isImagePropertiesUpdate(olddata.image, newdata.image, view)) {
+						if (await Parse.isImagePropertiesUpdate(olddata.image, newdata.image, view)) {
 							newdata.isImagePropsUpdate = true;
 							newdata.isImageChange = false;
 						}
@@ -159,7 +159,7 @@ export default class SimpleBanner extends Plugin {
 		return null;
 	}
 
-	render(data: BannerData) {
+	async render(data: BannerData) {
 		const { image, viewMode, lastViewMode, view, needsUpdate, isImageChange } = data;
 
 		if (this.settings.properties.autohide) {
@@ -175,7 +175,7 @@ export default class SimpleBanner extends Plugin {
 		const container = view?.containerEl;
 		if (container && (lastViewMode !== viewMode || needsUpdate)) {
 			const containers = container.querySelectorAll('.cm-scroller, .markdown-reading-view > .markdown-preview-view') as NodeListOf<HTMLElement>;
-			const imageOptions = Parse.link(image || '', view);
+			const imageOptions = await Parse.link(image || '', view);
 			const { featBanner, featIcon, featDatetime } = this;
 
 			const banners = featBanner.update(data, imageOptions, containers);

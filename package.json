@@ -1,7 +1,7 @@
 {
 	"name": "simple-banner",
-	"version": "0.3.0",
-	"description": "Simply add a banner image. Addtionally supports icons, showing time or dates.",
+	"version": "0.4.0",
+	"description": "Simply add a beautiful banner. Addtionally supports icons, showing time or dates.",
 	"main": "dist/main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

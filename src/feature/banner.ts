@@ -1,5 +1,5 @@
 import { BannerData, DeviceSettings, ImageOptions } from '../types/interfaces';
-import { CSSClasses, CSSValue } from '../types/enums';
+import { ContentType, CSSClasses, CSSValue } from '../types/enums';
 import DomUtils from '../utils/domutils';
 import SimpleBanner from '../main';
 import { FeatureBase } from './base';
@@ -39,15 +39,31 @@ export default class Banner extends FeatureBase {
 			if (isImageChange || isImagePropsUpdate) {
 				if (isImageChange) {
 					element.classList.remove(CSSClasses.Static);
+					element.firstChild?.remove();
 				}
 
-				DomUtils.setCSSVariables({
-					'url': `url(${imgOptions.url})`,
+				const vars =  {
 					'img-x': `${imgOptions.x}px`,
 					'img-y': `${imgOptions.y}px`,
 					'size': imgOptions.repeatable ? CSSValue.Auto : CSSValue.RevertLayer,
 					'repeat': imgOptions.repeatable ? CSSValue.Repeat : CSSValue.RevertLayer,
-				}, container);
+					'url': 'none',
+				};
+
+				if (imgOptions.type === ContentType.Video) {
+					const video = document.createElement('video');
+					video.controls = false;
+					video.autoplay = true;
+					video.muted = true;
+					video.loop = true;
+					video.src = imgOptions.url;
+					element.appendChild(video);
+					vars.url = 'none';
+				} else {
+					vars.url = `url(${imgOptions.url})`;
+				}
+
+				DomUtils.setCSSVariables(vars, container);
 			}
 		});
 		return banners;

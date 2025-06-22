@@ -11,6 +11,11 @@ export enum ViewMode {
 	Reading = 'preview',
 }
 
+export enum ContentType {
+	Image = 'image',
+	Video = 'video',
+}
+
 //----------------------------------
 // Settings Enums
 //----------------------------------

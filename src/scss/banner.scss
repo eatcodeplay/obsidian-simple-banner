@@ -12,6 +12,20 @@ div.simple-banner {
 	padding: var(--size-4-3) var(--size-4-3) 0 var(--size-4-3);
 	user-select: none;
 
+	& > video {
+		inset: 0;
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		animation: fade-in 0.7s linear forwards, banner-anim 0.8s ease-out;
+		object-position: calc(50% + var(--sb-img-x)) calc(50% + var(--sb-img-y));
+		border-radius: var(--sb-radius);
+		mask-image: var(--sb-mask);
+		transition: object-position 0.5s ease-in-out;
+		will-change: object-position;
+	}
+
 	&:before {
 		position: absolute;
 		inset: 0;

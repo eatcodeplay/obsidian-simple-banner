@@ -22,6 +22,7 @@ export interface ImageOptions {
 	external: boolean,
 	x: number;
 	y: number;
+	type: string | null;
 	repeatable: boolean;
 }
 
