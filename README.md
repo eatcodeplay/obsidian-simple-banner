@@ -8,7 +8,7 @@ Enhance your Obsidian notes with header images, icons, dates and times. Flexible
 
 * **Experimental feature:** Support for video files.
 * **Other Changes:**
-  * Support for relative paths (many thanks @AMC-Albert for the [Pull request](https://github.com/eatcodeplay/obsidian-simple-banner/pull/6))
+  * Support for relative paths (many thanks Albert O'Shea for the [Pull request](https://github.com/eatcodeplay/obsidian-simple-banner/pull/6))
   * Small text changes to the settings as requested by the Obsidian Team
 
 ## Key features
