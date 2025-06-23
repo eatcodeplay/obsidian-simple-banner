@@ -1,9 +1,9 @@
 {
 	"id": "simple-banner",
 	"name": "Simple Banner",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"minAppVersion": "1.8.9",
-	"description": "Simply add a beautiful banner. Addtionally supports icons, showing time or dates.",
+	"description": "Visually enhance your notes with a customizable banner. Supports icons and time/date display.",
 	"author": "Sandro Ducceschi",
 	"authorUrl": "https://eatcodeplay.dev",
 	"isDesktopOnly": false

@@ -50,6 +50,7 @@ export interface SimpleBannerSettings {
 export interface DeviceSettings {
 	bannerEnabled: boolean;
 	height: number;
+	viewOffset: number;
 	noteOffset: number;
 	bannerRadius: Array<number>;
 	bannerPadding: number;
@@ -69,6 +70,9 @@ export interface DeviceSettings {
 	datetimeOffset: Array<number>;
 	datetimeTimeFormat: string;
 	datetimeDateFormat: string;
+
+	interop: {
+	}
 }
 
 export interface PropertySettings {

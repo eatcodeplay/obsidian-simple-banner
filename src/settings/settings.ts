@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 	desktop: {
 		bannerEnabled: true,
 		height: 240,
+		viewOffset: 0,
 		noteOffset: -32,
 		bannerRadius: [8, 8, 8, 8],
 		bannerPadding: 8,
@@ -25,12 +26,16 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		datetimeAlignment: ['flex-end', 'flex-start'],
 		datetimeOffset: [0, 0],
 		datetimeTimeFormat: 'HH:mm',
-		datetimeDateFormat: 'dddd, MMMM Do YYYY'
+		datetimeDateFormat: 'dddd, MMMM Do YYYY',
+
+		interop: {
+		},
 	},
 
 	tablet: {
 		bannerEnabled: true,
 		height: 190,
+		viewOffset: 0,
 		noteOffset: -32,
 		bannerRadius: [8, 8, 8, 8],
 		bannerPadding: 8,
@@ -49,12 +54,16 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		datetimeAlignment: ['flex-end', 'flex-start'],
 		datetimeOffset: [0, 0],
 		datetimeTimeFormat: 'HH:mm',
-		datetimeDateFormat: 'dddd, MMMM Do YYYY'
+		datetimeDateFormat: 'dddd, MMMM Do YYYY',
+
+		interop: {
+		},
 	},
 
 	phone: {
 		bannerEnabled: true,
 		height: 160,
+		viewOffset: 0,
 		noteOffset: -32,
 		bannerRadius: [8, 8, 8, 8],
 		bannerPadding: 8,
@@ -73,7 +82,10 @@ const DEFAULT_SETTINGS: SimpleBannerSettings = {
 		datetimeAlignment: ['flex-end', 'flex-start'],
 		datetimeOffset: [0, 0],
 		datetimeTimeFormat: 'HH:mm',
-		datetimeDateFormat: 'dddd, MMMM Do YYYY'
+		datetimeDateFormat: 'dddd, MMMM Do YYYY',
+
+		interop: {
+		},
 	},
 
 	properties: {
@@ -137,6 +149,7 @@ export default class Settings extends PluginSettingTab {
 			this.createFrontmatterSettings();
 			this.createIconSettings();
 			this.createDatetimeSettings();
+			// this.createInteropSettings();
 		}
 	}
 
@@ -172,6 +185,13 @@ export default class Settings extends PluginSettingTab {
 				placeholder: 'Enter a number',
 				resetValue: defaultSettings.noteOffset,
 			}, settings, 'noteOffset');
+
+			this.addNumber({
+				title: 'View offset',
+				description: 'Move the position of the view content in pixels.',
+				placeholder: 'Enter a number',
+				resetValue: defaultSettings.viewOffset,
+			}, settings, 'viewOffset');
 
 
 			this.addNumber({
@@ -366,6 +386,16 @@ export default class Settings extends PluginSettingTab {
 			}, settings, 'datetimeOffset');
 		}
 	}
+
+	/*
+	createInteropSettings() {
+		const currentDevice = Settings.currentDevice;
+		const settings = this.plugin.settings[currentDevice];
+		const defaultSettings = DEFAULT_SETTINGS[currentDevice];
+
+		this.addHeading(`Plugin interoperability`, ['sbs-heading']);
+	}
+	*/
 
 	//----------------------------------
 	// Helper Methods

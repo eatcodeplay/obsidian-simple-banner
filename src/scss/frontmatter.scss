@@ -9,6 +9,16 @@
 	.inline-embed .markdown-preview-view {
 		padding-top: initial;
 	}
+
+	.cm-sizer {
+		position: relative;
+		z-index: 1;
+		margin-top: (var(--sb-note-offset, 0));
+	}
+}
+
+.workspace-leaf-content[data-sb] .view-content {
+	margin-top: var(--sb-view-offset, 0);
 }
 
 body.sb-autohide {

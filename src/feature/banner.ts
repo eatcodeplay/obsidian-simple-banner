@@ -66,6 +66,7 @@ export default class Banner extends FeatureBase {
 				DomUtils.setCSSVariables(vars, container);
 			}
 		});
+
 		return banners;
 	}
 

@@ -9,6 +9,7 @@ import Parse from './utils/parse';
 import Banner from './feature/banner';
 import Icon from './feature/icon';
 import Datetime from './feature/datetime';
+import PluginInterOp from './feature/interop';
 
 export default class SimpleBanner extends Plugin {
 	//---------------------------------------------------
@@ -22,6 +23,7 @@ export default class SimpleBanner extends Plugin {
 	protected featBanner: Banner;
 	protected featIcon: Icon;
 	protected featDatetime: Datetime;
+	protected featPluginInterop: PluginInterOp;
 
 	//---------------------------------------------------
 	//
@@ -41,6 +43,7 @@ export default class SimpleBanner extends Plugin {
 		this.featBanner = new Banner(this, this.deviceSettings);
 		this.featIcon = new Icon(this, this.deviceSettings);
 		this.featDatetime = new Datetime(this, this.deviceSettings);
+		this.featPluginInterop = new PluginInterOp(this, this.deviceSettings);
 
 		workspace.onLayoutReady(() => {
 			this.registerEvent(workspace.on('layout-change', this.handleLayoutChange.bind(this)));
@@ -51,10 +54,11 @@ export default class SimpleBanner extends Plugin {
 	}
 
 	onunload() {
-		const { featBanner, featIcon, featDatetime } = this;
+		const { featBanner, featIcon, featDatetime, featPluginInterop } = this;
 		featBanner.destroy();
 		featIcon.destroy();
 		featDatetime.destroy();
+		featPluginInterop.destroy();
 	}
 
 	//---------------------------------------------------
@@ -176,11 +180,17 @@ export default class SimpleBanner extends Plugin {
 		if (container && (lastViewMode !== viewMode || needsUpdate)) {
 			const containers = container.querySelectorAll('.cm-scroller, .markdown-reading-view > .markdown-preview-view') as NodeListOf<HTMLElement>;
 			const imageOptions = await Parse.link(image || '', view);
-			const { featBanner, featIcon, featDatetime } = this;
+			const {
+				featBanner,
+				featIcon,
+				featDatetime,
+				featPluginInterop,
+			} = this;
 
 			const banners = featBanner.update(data, imageOptions, containers);
 			featIcon.update(data, banners);
 			featDatetime.update(data, banners);
+			featPluginInterop.update(data, banners);
 
 			if (!isImageChange) {
 				featBanner.replace(banners);
@@ -232,14 +242,16 @@ export default class SimpleBanner extends Plugin {
 	applySettings() {
 		const settings = this.deviceSettings;
 		const height = settings.height;
-		const offset = settings.noteOffset;
+		const noteOffset = settings.noteOffset;
+		const viewOffset = settings.viewOffset;
 		const radius = settings.bannerRadius;
 		const padding = settings.bannerPadding;
 		const fade = settings.bannerFade;
 		const vars = {} as any;
 
 		vars['height'] = `${height}px`;
-		vars['note-offset'] = `${offset}px`;
+		vars['note-offset'] = `${noteOffset}px`;
+		vars['view-offset'] = `${viewOffset}px`;
 		vars['radius'] = `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`;
 		vars['padding'] = `${padding}px`;
 		vars['mask'] = (fade) ? CSSValue.RevertLayer : CSSValue.Initial;
