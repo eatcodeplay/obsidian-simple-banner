@@ -4,7 +4,13 @@ Enhance your Obsidian notes with header images, icons, dates and times. Flexible
 
 ![](https://repository-images.githubusercontent.com/973810470/011547eb-2e67-49c0-9d34-3786b8bfdca0)
 
-### Latest Update: `v0.4.0`:
+### Update: `v0.5.0`:
+
+* **New setting - View offset:** This allows you to move the entire note view up and down. <br/>Useful if you have other plugins on top that push simple banner down.
+* **Fixed:** Note Offset was not applied when "Autohide frontmatter/properties" was disabled. This is now fixed. <br/><br/>
+ℹ️ If your current view is affected by this change. Check your Note Offset Setting and correct the value.
+
+### Update: `v0.4.0`:
 
 * **Experimental feature:** Support for video files.
 * **Other Changes:**
