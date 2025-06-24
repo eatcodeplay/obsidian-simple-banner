@@ -381,7 +381,7 @@ export default class Settings extends PluginSettingTab {
 				placeholder: '0',
 				isValueArray: true,
 				length: 2,
-				resetValue: defaultSettings.iconOffset,
+				resetValue: defaultSettings.datetimeOffset,
 				classes: ['sbs-grid-xy', 'sbs-spacer'],
 			}, settings, 'datetimeOffset');
 		}
