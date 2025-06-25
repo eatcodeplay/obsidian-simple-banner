@@ -165,17 +165,6 @@ export default class SimpleBanner extends Plugin {
 
 	async render(data: BannerData) {
 		const { image, viewMode, lastViewMode, view, needsUpdate, isImageChange } = data;
-
-		if (this.settings.properties.autohide) {
-			const propsContainer = document.querySelector('.metadata-container');
-			if (propsContainer) {
-				const parent = propsContainer.parentNode;
-				if (parent && parent.firstChild !== propsContainer) {
-					parent.prepend(propsContainer);
-				}
-			}
-		}
-
 		const container = view?.containerEl;
 		if (container && (lastViewMode !== viewMode || needsUpdate)) {
 			const containers = container.querySelectorAll('.cm-scroller, .markdown-reading-view > .markdown-preview-view') as NodeListOf<HTMLElement>;
@@ -301,6 +290,13 @@ export default class SimpleBanner extends Plugin {
 	handleLayoutChange() {
 		const view = this.getActiveView();
 		if (view) {
+			if (this.settings.properties.autohide) {
+				const propsContainer = document.querySelector('.metadata-container');
+				const parent = propsContainer?.parentNode;
+				if (parent && parent.firstChild !== propsContainer) {
+					parent.prepend(propsContainer);
+				}
+			}
 			// @ts-ignore
 			if (!Store.exists(view?.leaf.id)) {
 				this.process(view.file, view);

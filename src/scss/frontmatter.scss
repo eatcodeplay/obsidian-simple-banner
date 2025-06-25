@@ -133,8 +133,8 @@ body.sb-autohide {
 		}
 	}
 
-	&.show-inline-title .workspace-leaf-content[data-sb] .view-content > .markdown-source-view.mod-cm6 > .cm-editor > .cm-scroller,
-	&.show-inline-title .workspace-leaf-content[data-sb] .view-content > .markdown-preview-view {
+	&.show-inline-title .workspace-leaf-content[data-sb] .view-content .markdown-source-view.mod-cm6 > .cm-editor > .cm-scroller,
+	&.show-inline-title .workspace-leaf-content[data-sb] .view-content .markdown-preview-view {
 		.cm-contentContainer {
 			padding-top: 0;
 		}
