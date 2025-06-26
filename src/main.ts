@@ -205,6 +205,15 @@ export default class SimpleBanner extends Plugin {
 				targets.forEach((t) => {
 					t.remove()
 				});
+
+				if (this.settings.properties.autohide) {
+					const inline = document.querySelector('.inline-title');
+					const meta = document.querySelector('.metadata-container');
+					if (inline && meta) {
+						inline.after(meta);
+					}
+				}
+
 				// @ts-ignore
 				Store.delete(view?.leaf.id);
 				delete container.dataset.sb;
@@ -291,10 +300,10 @@ export default class SimpleBanner extends Plugin {
 		const view = this.getActiveView();
 		if (view) {
 			if (this.settings.properties.autohide) {
-				const propsContainer = document.querySelector('.metadata-container');
-				const parent = propsContainer?.parentNode;
-				if (parent && parent.firstChild !== propsContainer) {
-					parent.prepend(propsContainer);
+				const inline = document.querySelector('.inline-title');
+				const meta = document.querySelector('.metadata-container');
+				if (inline && meta) {
+					inline.before(meta);
 				}
 			}
 			// @ts-ignore
