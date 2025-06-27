@@ -206,13 +206,7 @@ export default class SimpleBanner extends Plugin {
 					t.remove()
 				});
 
-				if (this.settings.properties.autohide) {
-					const inline = document.querySelector('.inline-title');
-					const meta = document.querySelector('.metadata-container');
-					if (inline && meta) {
-						inline.after(meta);
-					}
-				}
+				this.updateMetaDOM(true);
 
 				// @ts-ignore
 				Store.delete(view?.leaf.id);
@@ -299,13 +293,7 @@ export default class SimpleBanner extends Plugin {
 	handleLayoutChange() {
 		const view = this.getActiveView();
 		if (view) {
-			if (this.settings.properties.autohide) {
-				const inline = document.querySelector('.inline-title');
-				const meta = document.querySelector('.metadata-container');
-				if (inline && meta) {
-					inline.before(meta);
-				}
-			}
+			this.updateMetaDOM()
 			// @ts-ignore
 			if (!Store.exists(view?.leaf.id)) {
 				this.process(view.file, view);
@@ -320,6 +308,7 @@ export default class SimpleBanner extends Plugin {
 		const view = this.getActiveView();
 		if (view instanceof MarkdownView) {
 			this.process(file, view);
+			this.updateMetaDOM();
 		}
 	}
 
@@ -335,6 +324,22 @@ export default class SimpleBanner extends Plugin {
 	//----------------------------------
 	// Helper Methods
 	//----------------------------------
+	updateMetaDOM(reset = false) {
+		if (this.settings.properties.autohide) {
+			const inlines = document.querySelectorAll('.workspace-leaf-content[data-sb] .inline-title');
+			const metas = document.querySelectorAll('.workspace-leaf-content[data-sb] .metadata-container');
+			if (inlines.length > 0 && metas.length > 0) {
+				inlines.forEach((inline, idx) => {
+					if (reset) {
+						inline.after(metas[idx]);
+					} else {
+						inline.before(metas[idx]);
+					}
+				})
+			}
+		}
+	}
+
 	getActiveView(): MarkdownView | null {
 		return this.app.workspace.getActiveViewOfType(MarkdownView) || null;
 	}
