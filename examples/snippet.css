@@ -29,7 +29,7 @@ body {
 	--sb-img-x: 0;
 	--sb-img-y: 0;
 	/* Mask that is applied over the image */
-	--sb-mask: linear-gradient(180deg, var(--background-primary) 25%, transparent);
+	--sb-mask: linear-gradient(180deg, transparent 25%, var(--background-primary));
 
 	/* -------------------------------
 	  Icon Variables

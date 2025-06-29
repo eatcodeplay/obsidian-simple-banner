@@ -1,4 +1,4 @@
-import { MarkdownView, TFile, request, requestUrl } from 'obsidian';
+import { MarkdownView, Platform, requestUrl, TFile  } from 'obsidian';
 import SimpleBanner from '../main';
 import { IconData, ImageOptions } from '../types/interfaces';
 import { IconType, ContentType } from '../types/enums';
@@ -57,6 +57,11 @@ export default class Parse {
 				external = false;
 				displayText = null;
 			}
+		}
+
+		if (url.startsWith('file:')) {
+			url = url.replace(/^file:\/{1,}/, Platform.resourcePathPrefix)
+			external = true;
 		}
 
 		const hashIndex = url.indexOf('#');

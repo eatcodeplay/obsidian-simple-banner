@@ -8,7 +8,7 @@ body {
 	--sb-size: cover;
 	--sb-img-x: 0;
 	--sb-img-y: 0;
-	--sb-mask: linear-gradient(180deg, var(--background-primary) 25%, transparent);
+	--sb-mask: linear-gradient(180deg, transparent 25%, var(--background-primary));
 
 	/* Icon Variables */
 	--sb-icon-align-h: flex-start;
