@@ -28,8 +28,10 @@ body {
 	/* Background image offsets */
 	--sb-img-x: 0;
 	--sb-img-y: 0;
-	/* Mask that is applied over the image */
+	/* Mask/Gradient that is applied over the image */
 	--sb-mask: linear-gradient(180deg, transparent 25%, var(--background-primary));
+	/* iOS/iPadOS/Safari specific workaround  */
+	--sb-mask-webkit: -webkit-linear-gradient(270deg, transparent 25%, var(--background-primary));
 
 	/* -------------------------------
 	  Icon Variables

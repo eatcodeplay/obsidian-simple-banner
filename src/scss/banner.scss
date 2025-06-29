@@ -10,6 +10,7 @@ div.simple-banner {
 	margin-left: var(--sb-padding);
 	max-height: var(--sb-height);
 	padding: var(--size-4-3) var(--size-4-3) 0 var(--size-4-3);
+	transform: translate3d(0,0,0);
 	user-select: none;
 
 	& > video {
@@ -18,20 +19,20 @@ div.simple-banner {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		z-index: 2;
 		animation: fade-in 0.7s linear forwards, banner-anim 0.8s ease-out;
 		object-position: calc(50% + var(--sb-img-x)) calc(50% + var(--sb-img-y));
 		border-radius: var(--sb-radius);
 		transition: object-position 0.5s ease-in-out;
 		will-change: object-position;
+		transform: translate3d(0,0,0);
 	}
 
 	&:before {
+		content: '';
 		position: absolute;
 		inset: 0;
-		z-index: -1;
-		width: 100%;
-		height: 100%;
-		content: '';
+		z-index: 2;
 		box-shadow: inset 0 2px 4px 1px rgba(0, 0, 0, 0.1);
 		border-radius: var(--sb-radius);
 		background-color: rgba(0,0,0,.2);
@@ -45,16 +46,18 @@ div.simple-banner {
 		will-change: transform, background-position-x, background-position-y;
 		transform-style: preserve-3d;
 		backface-visibility: hidden;
+		transform: translate3d(0,0,0);
 	}
 
 	&:after {
 		position: absolute;
 		inset: 0;
-		z-index: 1;
-		width: 100%;
-		height: 100%;
+		z-index: 3;
 		content: '';
+		border-radius: var(--sb-radius);
 		background: var(--sb-mask);
+		background: var(--sb-mask-webkit);
+		transform: translate3d(0,0,0);
 		overflow: hidden;
 	}
 
@@ -64,14 +67,14 @@ div.simple-banner {
 
 	& + div {
 		position: relative;
-		z-index: 3;
+		z-index: 4;
 	}
 }
 
 body {
 	&.is-phone, &.is-tablet {
 		div.simple-banner {
-			width: calc(100% - (var(--sb-padding) - 2px));
+			width: calc(100% - (var(--sb-padding) * 2));
 		}
 	}
 }
