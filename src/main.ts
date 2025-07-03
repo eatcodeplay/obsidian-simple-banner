@@ -247,6 +247,7 @@ export default class SimpleBanner extends Plugin {
 		vars['radius'] = `${radius[0]}px ${radius[1]}px ${radius[2]}px ${radius[3]}px`;
 		vars['padding'] = `${padding}px`;
 		vars['mask'] = (fade) ? CSSValue.RevertLayer : CSSValue.Initial;
+		vars['mask-webkit'] = (fade) ? CSSValue.RevertLayer : CSSValue.Initial;
 
 		if (settings.iconEnabled) {
 			const iconSize = settings.iconSize;
