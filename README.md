@@ -182,7 +182,16 @@ The settings can bebroken down into two sections:
 
 ## Installation
 
-This plugin is currently not available in the Obsidian Community Plugins.
+### From the Obsidian Community Plugins Tab:
+
+1.  Open Obsidian.
+2.  Go to `Settings` -> `Community plugins`.
+3.  Make sure `Safe mode` is off.
+4.  Click `Browse` and search for "Simple Banner".
+5.  Click `Install` and then `Enable` the plugin.
+
+### Manually:
+
 You can install it either by using [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) or manually by following the instructions below:
 
 1.  Download the latest release from the [Releases](https://github.com/eatcodeplay/obsidian-simple-banner/releases) page.
