@@ -140,7 +140,7 @@ export default class Parse {
 		}
 
 		return {
-			url: url.trim(),
+			url: `"${url.trim().replace(/(["\\])/g, "\\$1")}"`,
 			external,
 			type,
 			...options,
