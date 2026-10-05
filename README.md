@@ -1,3 +1,6 @@
+> [!IMPORTANT]  
+> Since the developer stopped using Obsidian. This repository has been archived.
+
 # Simple Banner
 
 Enhance your Obsidian notes with header images, icons, dates and times. Flexible, customizable - fun!
