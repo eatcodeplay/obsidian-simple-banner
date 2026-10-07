@@ -11,7 +11,6 @@ div.simple-banner {
 		height: inherit;
 		z-index: 4;
 		margin: 0 auto;
-		max-width: var(--file-line-width);
 		transform: translate(0, 0);
 		animation: fade-in 0.7s linear forwards, icon-anim 0.8s ease-out;
 		will-change: transform, opacity;
@@ -88,4 +87,8 @@ body {
 			left: auto;
 		}
 	}
+}
+
+.is-readable-line-width div.simple-banner > div.icon {
+  max-width: var(--file-line-width);
 }
